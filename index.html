@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Code Quest — Level Up Your Programming Journey</title>
+<meta name="description" content="Learn Java visually. No typing, no compiler — just drag, match, arrange and level up." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --font-display:'Baloo 2','Trebuchet MS',system-ui,sans-serif;
+  --font-body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --magenta:#ff4d9d; --cyan:#38e1ff; --lime:#9bff5e; --gold:#ffd23f; --violet:#a855ff; --coral:#ff8a5c;
+  --ok:#54e6a0; --bad:#ff6b8a;
+  --r-lg:28px; --r-md:20px; --r-sm:14px;
+  --ease:cubic-bezier(.34,1.56,.64,1);
+}
+html[data-theme="light"]{
+  --bg1:#eef0ff; --bg2:#f6ecff; --bg3:#ffe9f5;
+  --surface:rgba(255,255,255,.72); --surface-2:rgba(255,255,255,.9);
+  --border:rgba(90,60,160,.16); --text:#1c1546; --muted:#5f568f;
+  --code-bg:rgba(28,20,64,.06); --shadow:0 20px 50px rgba(90,60,160,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--font-body); color:var(--text); overflow-x:hidden;
+  background:var(--bg1); min-height:100vh; min-height:100dvh; position:relative;
+  transition:background .5s ease,color .3s ease;
+}
+.aurora{position:fixed;inset:-30%;z-index:-2;filter:blur(70px);opacity:.85;pointer-events:none}
+.aurora span{position:absolute;border-radius:50%;mix-blend-mode:screen}
+.a1{width:60vw;height:60vw;left:-10%;top:-10%;background:radial-gradient(circle,var(--violet),transparent 60%);animation:drift1 22s ease-in-out infinite}
+.a2{width:55vw;height:55vw;right:-12%;top:5%;background:radial-gradient(circle,var(--magenta),transparent 60%);animation:drift2 26s ease-in-out infinite}
+.a3{width:50vw;height:50vw;left:20%;bottom:-20%;background:radial-gradient(circle,var(--cyan),transparent 60%);animation:drift3 30s ease-in-out infinite}
+html[data-theme="light"] .aurora{opacity:.55}
+@keyframes drift1{50%{transform:translate(12%,10%) scale(1.15)}}
+@keyframes drift2{50%{transform:translate(-10%,8%) scale(1.1)}}
+@keyframes drift3{50%{transform:translate(8%,-12%) scale(1.2)}}
+.grid-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.4;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(circle at 50% 40%,#000,transparent 85%)}
+
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:200}
+
+.wrap{max-width:940px;margin:0 auto;padding:18px 18px 90px;position:relative;z-index:1}
+.glass{background:var(--surface);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--border);box-shadow:var(--shadow)}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:22px;padding:12px 16px;border-radius:var(--r-md);position:sticky;top:10px;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:1.15rem;letter-spacing:.3px}
+.brand .logo{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,var(--magenta),var(--violet));box-shadow:0 6px 18px rgba(255,77,157,.5);font-size:18px}
+.brand small{color:var(--muted);font-weight:700;font-size:.62rem;display:block;letter-spacing:1.5px;text-transform:uppercase}
+.spacer{flex:1}
+.xp-chip{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);padding:7px 13px;border-radius:999px;font-weight:800;font-size:.85rem}
+.xp-chip .star{color:var(--gold)}
+.iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:1.1rem;cursor:pointer;display:grid;place-items:center;transition:transform .15s var(--ease),background .2s}
+.iconbtn:hover{transform:translateY(-2px)}
+.iconbtn:active{transform:scale(.9)}
+
+/* generic card */
+.card{border-radius:var(--r-lg);padding:26px;margin-bottom:18px}
+h1,h2,h3{font-family:var(--font-display);margin:0 0 .3em;line-height:1.1}
+h1{font-size:clamp(1.9rem,6vw,3rem)}
+h2{font-size:clamp(1.4rem,4.5vw,2rem)}
+.muted{color:var(--muted)}
+.center{text-align:center}
+
+/* buttons */
+.btn{font-family:var(--font-display);font-weight:700;border:none;cursor:pointer;border-radius:16px;padding:15px 26px;font-size:1.02rem;color:#fff;
+  background:linear-gradient(135deg,var(--magenta),var(--violet));box-shadow:0 10px 26px rgba(168,85,255,.4);transition:transform .16s var(--ease),box-shadow .2s,filter .2s;display:inline-flex;align-items:center;gap:9px;justify-content:center}
+.btn:hover{transform:translateY(-3px);filter:brightness(1.06)}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:grayscale(.4)}
+.btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border);box-shadow:none}
+.btn.cyan{background:linear-gradient(135deg,var(--cyan),#4d7bff);box-shadow:0 10px 26px rgba(56,225,255,.35)}
+.btn.gold{background:linear-gradient(135deg,var(--gold),var(--coral));color:#2a1a00;box-shadow:0 10px 26px rgba(255,210,63,.4)}
+.btn.sm{padding:11px 18px;font-size:.9rem;border-radius:13px}
+.btn:focus-visible,.iconbtn:focus-visible,.node:focus-visible,.chip:focus-visible,.dragitem:focus-visible,.opt:focus-visible,.mcell:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+
+.code{font-family:'SFMono-Regular',ui-monospace,'Cascadia Code',Consolas,monospace;background:var(--code-bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;font-size:.95rem;line-height:1.6;overflow-x:auto;white-space:pre}
+.tok-key{color:var(--magenta);font-weight:700}.tok-str{color:var(--lime)}.tok-num{color:var(--cyan)}.tok-com{color:var(--muted)}.tok-cls{color:var(--gold)}
+
+/* WELCOME */
+.hero{padding:40px 26px;text-align:center;border-radius:var(--r-lg)}
+.hero .mascot{font-size:80px;display:inline-block;animation:bob 3s ease-in-out infinite;filter:drop-shadow(0 12px 22px rgba(255,77,157,.4))}
+@keyframes bob{50%{transform:translateY(-14px) rotate(-4deg)}}
+.hero h1{background:linear-gradient(135deg,var(--magenta),var(--cyan) 60%,var(--lime));-webkit-background-clip:text;background-clip:text;color:transparent}
+.namefield{max-width:460px;margin:22px auto 0;display:flex;flex-direction:column;gap:12px}
+.namefield input,.namefield select{width:100%;font-family:var(--font-display);font-weight:700;font-size:1rem;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);appearance:none;-webkit-appearance:none}
+.namefield input:focus,.namefield select:focus{outline:3px solid var(--magenta);outline-offset:2px}
+.namefield select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+.namefield select option[value=""]{color:var(--muted)}
+.namefield .field-label{font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:-6px;text-align:left}
+#startBtn:disabled{opacity:.45;cursor:not-allowed}
+.feat{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+.feat span{background:var(--surface-2);border:1px solid var(--border);padding:8px 14px;border-radius:999px;font-weight:700;font-size:.82rem}
+
+/* QUEST MAP */
+.map-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.path{position:relative;padding:10px 0}
+.node-row{display:flex;align-items:center;gap:18px;padding:12px 6px;position:relative}
+.node-row:nth-child(even){flex-direction:row-reverse;text-align:right}
+.node{width:78px;height:78px;flex:0 0 auto;border-radius:24px;border:none;cursor:pointer;position:relative;display:grid;place-items:center;font-size:30px;
+  background:linear-gradient(135deg,var(--surface-2),var(--surface));border:1px solid var(--border);transition:transform .2s var(--ease),box-shadow .2s}
+.node .lvl-badge{position:absolute;top:-8px;left:-8px;background:var(--violet);color:#fff;font-family:var(--font-display);font-weight:800;font-size:.72rem;width:26px;height:26px;border-radius:9px;display:grid;place-items:center;box-shadow:0 4px 10px rgba(0,0,0,.3)}
+.node.unlocked{background:linear-gradient(135deg,var(--magenta),var(--violet));box-shadow:0 0 0 0 rgba(255,77,157,.5);animation:pulse 2.2s infinite}
+.node.done{background:linear-gradient(135deg,var(--ok),var(--cyan))}
+.node.done .lvl-badge{background:var(--ok)}
+.node.locked{filter:grayscale(.8);opacity:.55;cursor:not-allowed}
+.node:hover:not(.locked){transform:scale(1.08) rotate(-3deg)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,77,157,.55)}70%{box-shadow:0 0 0 18px rgba(255,77,157,0)}100%{box-shadow:0 0 0 0 rgba(255,77,157,0)}}
+.node-info{flex:1;min-width:0}
+.node-info .t{font-family:var(--font-display);font-weight:800;font-size:1.05rem}
+.node-info .d{color:var(--muted);font-size:.85rem;font-weight:600}
+.node-stars{font-size:.95rem;letter-spacing:2px;color:var(--gold);height:1.1em}
+.node-stars .off{opacity:.22;color:var(--muted)}
+.connector{position:absolute;left:44px;top:78px;bottom:-12px;width:4px;background:linear-gradient(var(--border),transparent);z-index:0}
+.node-row:nth-child(even) .connector{left:auto;right:44px}
+
+/* LEVEL flow */
+.lvl-shell{}
+.phase-bar{display:flex;gap:6px;margin:2px 0 18px}
+.phase-bar .seg{flex:1;height:8px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden}
+.phase-bar .seg .fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--lime));transition:width .5s var(--ease)}
+.phase-bar .seg.active .fill{width:100%}
+.phase-bar .seg.done .fill{width:100%;background:linear-gradient(90deg,var(--ok),var(--cyan))}
+.eyebrow{font-family:var(--font-display);font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:.72rem;color:var(--magenta)}
+
+.illus{font-size:64px;text-align:center;margin:8px 0 4px;min-height:70px}
+.concept-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:16px 0}
+.concept{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;font-weight:600}
+.concept .big{font-size:34px;display:block;margin-bottom:6px}
+.concept b{font-family:var(--font-display)}
+
+/* puzzle area */
+.prompt{font-family:var(--font-display);font-weight:700;font-size:1.15rem;margin-bottom:14px}
+.draglist{display:flex;flex-direction:column;gap:10px;touch-action:none}
+.dragitem{display:flex;align-items:center;gap:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:grab;font-family:var(--font-display);font-weight:700;user-select:none;transition:box-shadow .2s,transform .15s}
+.dragitem .grip{color:var(--muted);font-size:1.2rem;line-height:1}
+.dragitem .num{background:var(--violet);color:#fff;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:.8rem;flex:0 0 auto}
+.dragitem.placeholder{opacity:.3;border-style:dashed}
+.dragitem.pop{animation:pop .3s var(--ease)}
+@keyframes pop{40%{transform:scale(1.06)}}
+.drag-ghost{position:fixed;z-index:999;pointer-events:none;box-shadow:0 18px 40px rgba(0,0,0,.5);transform:rotate(-2deg) scale(1.03);opacity:.96}
+
+.pool{display:flex;flex-wrap:wrap;gap:10px;min-height:56px;padding:12px;border-radius:var(--r-md);background:var(--code-bg);border:1px dashed var(--border);align-content:flex-start}
+.pool.empty::before{content:"drop here";color:var(--muted);font-weight:700;font-size:.85rem;margin:auto}
+.chip{background:linear-gradient(135deg,var(--surface-2),var(--surface));border:1px solid var(--border);border-radius:12px;padding:11px 15px;font-family:var(--font-display);font-weight:700;cursor:grab;touch-action:none;user-select:none;transition:transform .15s var(--ease),box-shadow .2s;font-size:.95rem}
+.chip:hover{transform:translateY(-2px)}
+.chip.selected{outline:3px solid var(--cyan);outline-offset:2px}
+.bins{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:14px}
+.bin{border-radius:var(--r-md);padding:12px;background:var(--surface);border:2px solid var(--border);min-height:96px;transition:border-color .2s,background .2s}
+.bin.hover{border-color:var(--cyan);background:var(--surface-2)}
+.bin .bin-title{font-family:var(--font-display);font-weight:800;font-size:.9rem;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.bin .bin-title .dot{width:10px;height:10px;border-radius:50%}
+.bin .drop{display:flex;flex-wrap:wrap;gap:8px;min-height:38px}
+
+/* match */
+.match{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcol{display:flex;flex-direction:column;gap:10px}
+.mcell{background:var(--surface-2);border:1px solid var(--border);border-radius:13px;padding:14px;font-weight:700;cursor:pointer;font-family:var(--font-display);text-align:center;transition:transform .15s,border-color .2s}
+.mcell:hover{transform:translateY(-2px)}
+.mcell.sel{border-color:var(--cyan);outline:2px solid var(--cyan)}
+.mcell.linked{border-color:var(--lime)}
+.mcell .tag{display:inline-block;margin-left:6px;font-size:.7rem;font-weight:800;padding:2px 7px;border-radius:99px;color:#08121a}
+
+/* quiz */
+.qblock{margin-bottom:18px}
+.qblock .q{font-family:var(--font-display);font-weight:700;margin-bottom:10px}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;background:var(--surface-2);border:1px solid var(--border);border-radius:13px;padding:14px 16px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:transform .12s,border-color .2s,background .2s;color:var(--text)}
+.opt:hover{transform:translateY(-2px);border-color:var(--cyan)}
+.opt.sel{border-color:var(--cyan);background:var(--surface-2);outline:2px solid var(--cyan)}
+.opt.correct{border-color:var(--ok);background:rgba(84,230,160,.14)}
+.opt.wrong{border-color:var(--bad);background:rgba(255,107,138,.14)}
+
+.feedback{margin-top:14px;border-radius:14px;padding:14px 16px;font-weight:700;display:none;align-items:center;gap:10px}
+.feedback.show{display:flex;animation:slideup .3s var(--ease)}
+.feedback.good{background:rgba(84,230,160,.15);border:1px solid var(--ok)}
+.feedback.bad{background:rgba(255,107,138,.14);border:1px solid var(--bad)}
+@keyframes slideup{from{transform:translateY(10px);opacity:0}}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+.footbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center}
+.hintbox{background:rgba(255,210,63,.12);border:1px solid var(--gold);border-radius:13px;padding:12px 14px;margin-top:12px;font-weight:700;display:none}
+.hintbox.show{display:block;animation:slideup .3s var(--ease)}
+
+/* complete */
+.complete{text-align:center;padding:36px 24px}
+.badge-earned{font-size:88px;animation:badgein .7s var(--ease);filter:drop-shadow(0 12px 26px rgba(255,210,63,.5))}
+@keyframes badgein{0%{transform:scale(0) rotate(-180deg)}70%{transform:scale(1.2) rotate(10deg)}}
+.stars-big{font-size:44px;letter-spacing:6px;margin:6px 0}
+.stars-big .s{display:inline-block;animation:starpop .5s var(--ease) backwards;color:var(--gold)}
+.stars-big .s:nth-child(2){animation-delay:.15s}.stars-big .s:nth-child(3){animation-delay:.3s}
+.stars-big .off{color:var(--muted);opacity:.3}
+@keyframes starpop{0%{transform:scale(0) rotate(-40deg)}60%{transform:scale(1.35)}}
+
+/* finale */
+.finale{text-align:center;padding:30px 22px}
+.trophy{font-size:110px;animation:bob 2.4s ease-in-out infinite;filter:drop-shadow(0 16px 30px rgba(255,210,63,.55))}
+.badge-shelf{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:20px 0}
+.badge-shelf .b{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 12px;width:120px}
+.badge-shelf .b .e{font-size:40px}
+.badge-shelf .b .n{font-family:var(--font-display);font-weight:800;font-size:.72rem;margin-top:4px}
+
+/* toast */
+#toaster{position:fixed;left:0;right:0;bottom:24px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:300;pointer-events:none;padding:0 12px}
+.toast{background:var(--surface-2);backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:16px;padding:12px 20px;font-family:var(--font-display);font-weight:800;box-shadow:var(--shadow);animation:toastin .35s var(--ease);max-width:92vw;text-align:center}
+@keyframes toastin{from{transform:translateY(20px) scale(.9);opacity:0}}
+.toast.out{animation:toastout .35s ease forwards}
+@keyframes toastout{to{transform:translateY(20px) scale(.9);opacity:0}}
+
+@media (max-width:560px){
+  .card{padding:20px}.hero{padding:30px 18px}
+  .node{width:64px;height:64px;font-size:24px}
+  .connector{left:36px}.node-row:nth-child(even) .connector{right:36px}
+  .match{grid-template-columns:1fr}
+  .topbar{padding:10px 12px}
+  .xp-chip{padding:6px 10px;font-size:.78rem}
+  .brand small{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.05s!important}
+  .aurora span{animation:none}
+}
+/* ===== QUEST SELECT HUB ===== */
+.select-grid{display:grid;gap:18px;grid-template-columns:1fr 1fr}
+.quest-card{border-radius:var(--r-lg);padding:26px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s var(--ease),box-shadow .25s;border:1px solid var(--border)}
+.quest-card:hover{transform:translateY(-6px)}
+.quest-card .glow{position:absolute;inset:0;opacity:.18;z-index:-1}
+.quest-card .qicon{font-size:52px}
+.quest-card h2{margin-top:8px}
+.quest-card .tags{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}
+.quest-card .tags span{font-size:.72rem;font-weight:800;background:var(--surface-2);border:1px solid var(--border);padding:5px 10px;border-radius:99px}
+.quest-card .status{font-weight:800;font-size:.85rem;margin-top:6px}
+.badge-ribbon{position:absolute;top:14px;right:14px;background:var(--gold);color:#2a1a00;font-family:var(--font-display);font-weight:800;font-size:.72rem;padding:5px 11px;border-radius:99px}
+
+/* ===== PHONE PREVIEW ===== */
+.stage-layout{display:grid;gap:18px;grid-template-columns:1.1fr .9fr;align-items:start}
+.phone{width:100%;max-width:320px;margin:0 auto;aspect-ratio:9/18;background:var(--code-bg);border:10px solid #0c0a1c;border-radius:38px;box-shadow:var(--shadow),inset 0 0 0 2px rgba(255,255,255,.06);position:relative;overflow:hidden}
+html[data-theme="light"] .phone{border-color:#241a4d}
+.phone .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:46%;height:22px;background:#0c0a1c;border-radius:0 0 16px 16px;z-index:5}
+html[data-theme="light"] .phone .notch{background:#241a4d}
+.phone .screen{position:absolute;inset:0;padding:34px 16px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;transition:background .3s,color .3s}
+.phone.dropzone.hover .screen{outline:3px dashed var(--cyan);outline-offset:-6px}
+.ig{--ig-bg:#fff;--ig-text:#111;--ig-accent:#0095f6;--ig-radius:50%;--ig-card:transparent;--ig-shadow:none;--ig-font:var(--font-body);--ig-align:flex-start;background:var(--ig-bg);color:var(--ig-text);font-family:var(--ig-font)}
+.ig .ig-inner{display:flex;flex-direction:column;gap:12px;padding:12px;border-radius:16px;background:var(--ig-card);box-shadow:var(--ig-shadow);align-items:var(--ig-align);text-align:var(--ig-align, left)}
+.ig.center .ig-inner{align-items:center;text-align:center}
+.ig-avatar{width:88px;height:88px;border-radius:var(--ig-radius);object-fit:cover;background:linear-gradient(135deg,var(--magenta),var(--violet));display:grid;place-items:center;font-size:34px;color:#fff;border:3px solid rgba(255,255,255,.6);flex:0 0 auto}
+.ig-name{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:inherit}
+.ig-handle{font-size:.85rem;opacity:.7;font-weight:700}
+.ig-bio{font-size:.85rem;line-height:1.5;white-space:pre-wrap}
+.ig-stats{display:flex;gap:16px}
+.ig-stat{text-align:center}
+.ig-stat b{display:block;font-size:1rem}
+.ig-stat span{font-size:.72rem;opacity:.7}
+.ig-btns{display:flex;gap:8px;flex-wrap:wrap;width:100%;justify-content:inherit}
+.ig-btn{border:none;border-radius:var(--ig-btnradius,10px);padding:8px 14px;font-weight:800;font-size:.8rem;cursor:pointer;background:var(--ig-accent);color:#fff;font-family:inherit}
+.ig-btn.sec{background:rgba(128,128,128,.18);color:var(--ig-text)}
+.ig-verified{color:var(--ig-accent)}
+.ig-badge{font-size:.66rem;font-weight:800;padding:3px 8px;border-radius:99px;background:var(--gold);color:#2a1a00}
+.ig-highlights{display:flex;gap:10px;overflow-x:auto;width:100%;padding-bottom:4px}
+.ig-hl{flex:0 0 auto;text-align:center;font-size:.62rem;font-weight:700}
+.ig-hl .ring{width:52px;height:52px;border-radius:50%;padding:2px;background:linear-gradient(45deg,#f9ce34,#ee2a7b,#6228d7);display:grid;place-items:center;margin-bottom:3px}
+.ig-hl .ring i{width:100%;height:100%;border-radius:50%;background:var(--ig-bg);display:grid;place-items:center;font-style:normal;font-size:20px}
+.ig-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:inherit}
+.ig-chip{font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:99px;background:rgba(128,128,128,.16)}
+.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%}
+.ig-grid .cell{aspect-ratio:1;border-radius:6px;display:grid;place-items:center;font-size:18px}
+.ig-slot{width:100%;animation:slideup .35s var(--ease)}
+.ig-meta{font-size:.75rem;opacity:.8;display:flex;flex-direction:column;gap:2px;width:100%}
+.ig-meta div{display:flex;gap:6px;align-items:center}
+
+/* palette + checklist */
+.side{display:flex;flex-direction:column;gap:14px}
+.palette{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chip-el{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:12px;cursor:grab;touch-action:none;user-select:none;text-align:center;transition:transform .15s var(--ease),border-color .2s}
+.chip-el:hover{transform:translateY(-2px);border-color:var(--cyan)}
+.chip-el.used{opacity:.45;pointer-events:none}
+.chip-el .ce-ic{font-size:26px}
+.chip-el .ce-name{font-family:var(--font-display);font-weight:800;font-size:.82rem;margin-top:3px}
+.chip-el .ce-tag{font-family:ui-monospace,monospace;font-size:.68rem;color:var(--cyan);margin-top:2px}
+.checklist{display:flex;flex-direction:column;gap:8px}
+.check-item{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-weight:700;font-size:.85rem;transition:border-color .2s,background .2s}
+.check-item .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--muted);flex:0 0 auto;display:grid;place-items:center;font-size:.8rem}
+.check-item.done{border-color:var(--ok);background:rgba(84,230,160,.1)}
+.check-item.done .box{background:var(--ok);border-color:var(--ok);color:#062}
+
+/* CSS stylist controls */
+.ctrl-group{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px}
+.ctrl-group .lbl{font-family:var(--font-display);font-weight:800;font-size:.9rem;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.ctrl-group .learn{font-size:.74rem;color:var(--muted);font-weight:600;margin-bottom:10px}
+.opt-row{display:flex;gap:8px;flex-wrap:wrap}
+.opt-pill{border:1px solid var(--border);background:var(--surface);border-radius:11px;padding:8px 13px;font-weight:800;font-size:.8rem;cursor:pointer;color:var(--text);transition:transform .12s,border-color .2s}
+.opt-pill:hover{transform:translateY(-2px)}
+.opt-pill.active{border-color:var(--cyan);outline:2px solid var(--cyan)}
+.swatch{width:34px;height:34px;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:transform .12s}
+.swatch:hover{transform:scale(1.12)}
+.swatch.active{outline:3px solid var(--cyan);outline-offset:2px}
+
+/* stage 3 form */
+.form-grid{display:flex;flex-direction:column;gap:10px}
+.field label{display:block;font-weight:800;font-size:.78rem;margin-bottom:4px}
+.field input,.field textarea{width:100%;padding:10px 12px;border-radius:11px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-family:var(--font-body);font-weight:600;font-size:.9rem}
+.field input:focus,.field textarea:focus{outline:2px solid var(--cyan);border-color:var(--cyan)}
+.field .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gen-row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.alert{border-radius:11px;padding:9px 12px;font-weight:800;font-size:.8rem;margin-top:6px;display:none}
+.alert.show{display:block;animation:slideup .3s var(--ease)}
+.alert.err{background:rgba(255,107,138,.15);border:1px solid var(--bad)}
+.alert.warn{background:rgba(255,210,63,.15);border:1px solid var(--gold)}
+.concept-note{font-size:.72rem;color:var(--muted);font-weight:600;margin-top:4px}
+
+@media (max-width:720px){
+  .select-grid{grid-template-columns:1fr}
+  .stage-layout{grid-template-columns:1fr}
+  .phone{order:-1}
+}
+/* ===== ATM CAPSTONE ===== */
+.atm-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+.atm{width:100%;max-width:360px;background:linear-gradient(160deg,#12324a,#0a1a2b);border:1px solid rgba(255,255,255,.12);border-radius:26px;padding:16px;box-shadow:var(--shadow);position:relative}
+.atm-brand{display:flex;align-items:center;gap:8px;color:#ffd23f;font-family:var(--font-display);font-weight:800;justify-content:center;margin-bottom:10px;font-size:1.05rem}
+.atm-brand .chip{width:26px;height:20px;border-radius:5px;background:linear-gradient(135deg,#ffd23f,#ffa500)}
+.atm-screen{background:linear-gradient(160deg,#061722,#0a2233);border:1px solid rgba(120,220,255,.2);border-radius:16px;padding:16px;min-height:230px;color:#e5f6ff;box-shadow:inset 0 0 34px rgba(0,170,255,.1);display:flex;flex-direction:column;gap:12px}
+.atm-screen h3{color:#7fe7ff;font-family:var(--font-display);margin:0}
+.atm-screen .sub{color:#a9d6ea;font-size:.82rem;font-weight:600}
+.atm-slot{height:9px;border-radius:6px;background:#050d14;margin:14px 26px 2px;box-shadow:inset 0 2px 6px rgba(0,0,0,.7)}
+.atm-slot.blink{animation:slotblink 1s ease-in-out infinite}
+@keyframes slotblink{50%{box-shadow:inset 0 2px 6px rgba(0,0,0,.7),0 0 12px 2px var(--cyan)}}
+.atm-slot-label{text-align:center;font-size:.68rem;color:var(--muted);font-weight:700}
+.atm-receipt{background:#f6f4ea;color:#222;border-radius:10px;padding:12px;font-family:ui-monospace,monospace;font-size:.78rem;line-height:1.6;animation:receipt .5s var(--ease)}
+@keyframes receipt{from{transform:translateY(-16px);opacity:0}}
+.abtn{border:none;border-radius:12px;padding:13px 16px;font-family:var(--font-display);font-weight:800;font-size:.92rem;cursor:pointer;color:#062033;background:linear-gradient(135deg,#38e1ff,#5a9bff);transition:transform .14s var(--ease),filter .2s;width:100%}
+.abtn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.abtn:active{transform:scale(.96)}
+.abtn.gold{background:linear-gradient(135deg,#ffd23f,#ff9f43);color:#3a2500}
+.abtn.ghost{background:rgba(255,255,255,.1);color:#e5f6ff;border:1px solid rgba(255,255,255,.2)}
+.abtn.danger{background:linear-gradient(135deg,#ff6b8a,#ff4d4d);color:#fff}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.key{padding:15px;border-radius:12px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);color:#fff;font-family:var(--font-display);font-weight:800;font-size:1.15rem;cursor:pointer;transition:transform .1s}
+.key:active{transform:scale(.92);background:rgba(120,220,255,.25)}
+.pin-dots{display:flex;gap:12px;justify-content:center;font-size:1.7rem;letter-spacing:3px;color:#7fe7ff;min-height:1.7rem}
+.bal-card{background:linear-gradient(135deg,#0095f6,#6228d7);border-radius:16px;padding:20px;text-align:center;color:#fff;box-shadow:0 10px 26px rgba(98,40,215,.4)}
+.bal-card .lbl{font-size:.75rem;opacity:.85;font-weight:700;letter-spacing:1px}
+.bal-card .amt{font-family:var(--font-display);font-weight:800;font-size:2.1rem;margin-top:4px}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.menu-item{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:14px 8px;color:#fff;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:.82rem;transition:transform .14s,background .2s}
+.menu-item:hover{transform:translateY(-3px);background:rgba(120,220,255,.16)}
+.menu-item .mi{font-size:24px}
+.menu-item.wired{border-color:var(--lime);background:rgba(155,255,94,.12)}
+.txn-list{display:flex;flex-direction:column;gap:7px}
+.txn{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:9px 12px;font-weight:700;font-size:.82rem;animation:slideup .3s var(--ease)}
+.txn .t-type{display:flex;gap:7px;align-items:center}
+.txn .amt.pos{color:#7dffb0}.txn .amt.neg{color:#ff9d9d}
+.field.atm-field input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;text-align:center;font-size:1.2rem;font-family:var(--font-display)}
+.var-box{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:9px 12px;font-weight:700;margin-bottom:7px;font-size:.85rem;color:#e5f6ff}
+.var-box .type{font-size:.66rem;font-weight:800;padding:3px 9px;border-radius:99px}
+.type.text{background:rgba(56,225,255,.22);color:#7fe7ff}
+.type.num{background:rgba(155,255,94,.2);color:#c6ff9b}
+.deco-grid{display:grid;gap:3px;margin-top:6px}
+.deco-grid .d{aspect-ratio:1;border-radius:5px;display:grid;place-items:center;font-size:15px}
+.coin{position:fixed;top:-40px;font-size:26px;pointer-events:none;z-index:250;will-change:transform}
+@keyframes coinfall{to{transform:translateY(105vh) rotate(540deg);opacity:.2}}
+.stage-dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:6px}
+.stage-dots .sd{width:22px;height:8px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border)}
+.stage-dots .sd.on{background:linear-gradient(90deg,var(--cyan),var(--lime))}
+.stage-dots .sd.cur{outline:2px solid var(--cyan);outline-offset:1px}
+/* ===== Web Developer Path (hub + coding levels) ===== */
+.path-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:16px}
+@media(max-width:760px){.path-grid{grid-template-columns:1fr}}
+.path-card{position:relative;padding:22px;border-radius:var(--r-md);cursor:pointer;overflow:hidden;transition:transform .2s var(--ease),box-shadow .25s}
+.path-card:hover{transform:translateY(-3px)}
+.path-card .qicon{font-size:40px}
+.path-card h2{margin:6px 0}
+.path-card.final{outline:2px dashed rgba(238,42,123,.55);outline-offset:-2px}
+.path-prog{display:flex;align-items:center;gap:10px;margin:12px 0 8px}
+.path-prog .progress-web{flex:1}
+.path-prog span{font-weight:800;font-size:.82rem;color:var(--muted)}
+.progress-web{height:9px;border-radius:99px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border)}
+.progress-web>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--lime));transition:width .4s var(--ease)}
+.tk-badge{color:#fff;padding:5px 12px;border-radius:99px;font-weight:800;font-size:.8rem}
+.btn.sm{padding:8px 14px;font-size:.85rem}
+.lvl-head{margin-bottom:2px}
+.lvl-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+@media(max-width:900px){.lvl-layout{grid-template-columns:1fr}}
+.lvl-left,.lvl-right{display:flex;flex-direction:column;gap:14px}
+.concept{font-weight:700;color:var(--muted);margin:8px 0 10px}
+.task{font-weight:600;line-height:1.65}
+.task code,.concept code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--surface-2);padding:1px 6px;border-radius:6px;font-size:.86em}
+.web-editor{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85rem;line-height:1.55;width:100%;min-height:170px;resize:vertical;background:#161036;color:#eef1ff;border:1px solid var(--border);border-radius:12px;padding:12px;white-space:pre;overflow:auto;tab-size:2}
+.web-editor.code{min-height:200px}
+.web-editor:focus{outline:2px solid var(--cyan);outline-offset:0}
+.lvl-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.web-frame{width:100%;height:240px;border:1px solid var(--border);border-radius:12px;background:#fff;margin-top:4px}
+.web-console{margin-top:10px;background:#0c0a20;color:#c9f79b;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:ui-monospace,monospace;font-size:.8rem;max-height:120px;overflow:auto;white-space:pre-wrap}
+.web-console .err{color:#ff9a9a}
+.test-list{display:flex;flex-direction:column;gap:8px}
+.test-item{display:flex;align-items:center;gap:9px;font-weight:700;font-size:.9rem;padding:9px 11px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+.test-item .tbox{width:20px;height:20px;flex:none;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);font-size:.78rem}
+.test-item.pass{background:rgba(46,204,113,.14);border-color:rgba(46,204,113,.5)}
+.test-item.pass .tbox{background:#2ecc71;color:#fff}
+.test-item.fail{background:rgba(255,90,90,.12);border-color:rgba(255,90,90,.45)}
+.test-item.fail .tbox{background:#ff5a5a;color:#fff}
+.pass-banner{font-weight:800;color:#1ea55a;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+<div class="grid-bg"></div>
+<canvas id="confetti"></canvas>
+<div id="toaster"></div>
+<div class="wrap" id="app"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   CODE QUEST — visual Java learning adventure (zero-build, single file)
+   Architecture: in-memory state -> data-driven LEVELS -> 4 reusable
+   puzzle engines (arrange / bins / match / quiz) -> screen renderers.
+   ============================================================ */
+
+/* ---------- helpers ---------- */
+const $ = (sel,root=document)=>root.querySelector(sel);
+const el = (tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;};
+const shuffle = a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc = s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const jset = new Set(['System','out','println','print','int','double','char','boolean','String','if','else','switch','case','for','while','new','Scanner','true','false','void','class','public','static','main','return','break']);
+function hi(code){ // tiny java highlighter for read-only examples
+  return esc(code)
+    .replace(/(&quot;|").*?(&quot;|")/g,m=>`<span class="tok-str">${m}</span>`)
+    .replace(/'[^']*'/g,m=>`<span class="tok-str">${m}</span>`)
+    .replace(/\b(\d+\.?\d*)\b/g,'<span class="tok-num">$1</span>')
+    .replace(/\/\/[^\n]*/g,m=>`<span class="tok-com">${m}</span>`)
+    .replace(/\b([A-Z][a-zA-Z]+)\b/g,'<span class="tok-cls">$1</span>')
+    .replace(/\b(int|double|char|boolean|if|else|switch|case|for|while|new|true|false|void|public|static|return|break|println|print)\b/g,'<span class="tok-key">$1</span>');
+}
+
+/* ---------- audio (Web Audio, no files) ---------- */
+const Audio_={ctx:null,
+  ensure(){if(!this.ctx){try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}},
+  tone(f,t,type='sine',g=.12){if(state.muted)return;this.ensure();if(!this.ctx)return;
+    const o=this.ctx.createOscillator(),v=this.ctx.createGain();o.type=type;o.frequency.value=f;
+    o.connect(v);v.connect(this.ctx.destination);const n=this.ctx.currentTime;
+    v.gain.setValueAtTime(0,n);v.gain.linearRampToValueAtTime(g,n+.01);v.gain.exponentialRampToValueAtTime(.0001,n+t);
+    o.start(n);o.stop(n+t);},
+  click(){this.tone(320,.06,'triangle',.08);},
+  pick(){this.tone(520,.05,'sine',.06);},
+  correct(){this.tone(660,.1,'sine');setTimeout(()=>this.tone(880,.16,'sine'),90);},
+  wrong(){this.tone(180,.18,'sawtooth',.09);},
+  unlock(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.tone(f,.15,'triangle'),i*90));},
+  win(){[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>this.tone(f,.22,'sine'),i*120));}
+};
+
+/* ---------- confetti / fireworks ---------- */
+const Confetti=(()=>{
+  const cv=$('#confetti'),cx=cv.getContext('2d');let parts=[],raf=null;
+  const COLORS=['#ff4d9d','#38e1ff','#9bff5e','#ffd23f','#a855ff','#ff8a5c'];
+  function size(){cv.width=innerWidth;cv.height=innerHeight;}
+  addEventListener('resize',size);size();
+  function loop(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    parts=parts.filter(p=>p.life>0);
+    for(const p of parts){
+      p.vy+=.12;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life--;
+      cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);cx.globalAlpha=Math.min(1,p.life/28);
+      cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);cx.restore();
+    }
+    if(parts.length)raf=requestAnimationFrame(loop);else raf=null;
+  }
+  function add(list){parts=parts.concat(list);if(!raf)raf=requestAnimationFrame(loop);}
+  function burst(x,y,n=80,spread=Math.PI*2){
+    const list=[];for(let i=0;i<n;i++){const a=Math.random()*spread-spread/2-Math.PI/2,sp=4+Math.random()*7;
+      list.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,rot:Math.random()*6,vr:(Math.random()-.5)*.4,s:6+Math.random()*8,c:COLORS[(Math.random()*COLORS.length)|0],life:70+Math.random()*40});}
+    add(list);
+  }
+  return{
+    celebrate(){burst(innerWidth*.5,innerHeight*.35,140);setTimeout(()=>burst(innerWidth*.2,innerHeight*.4,70),200);setTimeout(()=>burst(innerWidth*.8,innerHeight*.4,70),350);},
+    fireworks(){let c=0;const iv=setInterval(()=>{burst(innerWidth*(.2+Math.random()*.6),innerHeight*(.2+Math.random()*.4),90);if(++c>9)clearInterval(iv);},420);}
+  };
+})();
+
+/* ---------- toasts & encouragement ---------- */
+function toast(msg,ms=1900){const t=el('div','toast',msg);$('#toaster').appendChild(t);
+  setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),350);},ms);}
+const CHEERS=['🔥 Awesome!','⭐ Great Job!','🚀 You\'re becoming a programmer!','💯 Excellent!','🏆 Genius!','🎉 Nailed it!','✨ Brilliant!','👏 Keep going!'];
+const QUOTES=['💡 "Every expert was once a beginner."','🌱 "Small steps every day beat giant leaps once a year."','🧠 "Code is just puzzles you already know how to solve."','⚡ "Bugs are just lessons in disguise."'];
+const cheer=()=>toast(CHEERS[(Math.random()*CHEERS.length)|0]);
+
+/* ============================================================
+   LEVEL DATA
+   Puzzle shapes:
+   arrange: {type:'arrange', prompt, blocks:[...display], answer:[...correct order]}
+   bins:    {type:'bins', prompt, bins:[{id,label,color}], items:[{label,bin}]}
+   match:   {type:'match', prompt, pairs:[{left,right}]}
+   quiz:    {type:'quiz', prompt, questions:[{q,code?,options:[..],answer:idx,explain}]}
+   Each level: intro/learn/practice[]/boss + reward badge + xp
+   ============================================================ */
+const LEVELS=[
+{ id:1,title:'Hello, World!',icon:'👋',color:'#ff4d9d',badge:'🌟',badgeName:'First Steps',xp:100,
+  objective:'Discover how a program talks to the world — by printing output to the screen.',
+  intro:{illus:'🖥️',example:'System.out.println("Hello, World!");'},
+  learn:{illus:'📢',
+    points:[{e:'🗣️',t:'println',d:'Says a line out loud on the screen'},{e:'💬',t:'"quotes"',d:'Text to print goes inside quotes'},{e:'📤',t:'output',d:'What the program shows you'}],
+    example:'System.out.println("I am learning Java!");',
+    exampleNote:'This prints:  I am learning Java!'},
+  practice:[
+    {type:'arrange',prompt:'Drag the blocks into the right order to print a message.',
+      blocks:['System.out',' .println(','"Hi there!"',' );'],answer:['System.out',' .println(','"Hi there!"',' );']},
+    {type:'quiz',prompt:'What does println do?',questions:[
+      {q:'Choose the best description:',options:['Deletes text','Prints a line of output','Adds two numbers','Stores a password'],answer:1,explain:'println prints a line to the screen.'}]},
+    {type:'quiz',prompt:'Guess the output.',questions:[
+      {q:'System.out.println("Java is fun");',code:'System.out.println("Java is fun");',options:['Java is fun','"Java is fun"','println','Nothing'],answer:0,explain:'Only the text inside the quotes is printed.'}]}
+  ],
+  boss:{type:'arrange',prompt:'BOSS: Build the classic first program — arrange all blocks correctly.',
+    blocks:['System.out',' .println(','"Hello, World!"',' );'],answer:['System.out',' .println(','"Hello, World!"',' );']}
+},
+{ id:2,title:'Variables',icon:'📦',color:'#a855ff',badge:'🧠',badgeName:'Memory Master',xp:120,
+  objective:'Learn how programs remember things using labelled boxes called variables.',
+  intro:{illus:'📦',example:'int age = 25;'},
+  learn:{illus:'🏷️',
+    points:[{e:'📦',t:'box',d:'A variable is a labelled box'},{e:'🏷️',t:'name',d:'The label tells you what\'s inside'},{e:'💾',t:'value',d:'The thing stored inside the box'}],
+    example:'String name = "Rahul";\nint age = 25;',
+    exampleNote:'Two boxes: one holds a name, one holds a number.'},
+  practice:[
+    {type:'bins',prompt:'Drop each value into the box where it belongs.',
+      bins:[{id:'name',label:'name',color:'#38e1ff'},{id:'age',label:'age',color:'#9bff5e'},{id:'city',label:'city',color:'#ffd23f'}],
+      items:[{label:'"Rahul"',bin:'name'},{label:'25',bin:'age'},{label:'"Delhi"',bin:'city'}]},
+    {type:'quiz',prompt:'Which one correctly stores a number in a box called score?',questions:[
+      {q:'Pick the correct variable:',options:['score = int;','int score = 10;','10 = int score;','print score;'],answer:1,explain:'type name = value;  →  int score = 10;'}]}
+  ],
+  boss:{type:'bins',prompt:'BOSS: Help the robot remember everything about a new student. Sort every value.',
+    bins:[{id:'name',label:'name',color:'#38e1ff'},{id:'age',label:'age',color:'#9bff5e'},{id:'city',label:'city',color:'#ffd23f'}],
+    items:[{label:'"Anaya"',bin:'name'},{label:'15',bin:'age'},{label:'"Mumbai"',bin:'city'}]}
+},
+{ id:3,title:'Data Types',icon:'🔤',color:'#38e1ff',badge:'🔍',badgeName:'Datatype Detective',xp:140,
+  objective:'Every value has a type. Learn to tell numbers, text, letters and yes/no apart.',
+  intro:{illus:'🧩',example:'int  double  char  boolean  String'},
+  learn:{illus:'🗂️',
+    points:[{e:'🔢',t:'int',d:'Whole numbers: 25'},{e:'💧',t:'double',d:'Decimals: 4.5'},{e:'🔠',t:'char',d:"One letter: 'A'"},{e:'🔘',t:'boolean',d:'true / false'},{e:'📝',t:'String',d:'Text: "Rahul"'}],
+    example:"int n = 25;   double p = 4.5;\nchar g = 'A';  boolean ok = true;\nString s = \"Rahul\";",
+    exampleNote:'Match every value to the right kind of box.'},
+  practice:[
+    {type:'bins',prompt:'Sort each value into its correct data type.',
+      bins:[{id:'int',label:'int',color:'#38e1ff'},{id:'String',label:'String',color:'#9bff5e'},{id:'boolean',label:'boolean',color:'#ff8a5c'}],
+      items:[{label:'25',bin:'int'},{label:'"Rahul"',bin:'String'},{label:'true',bin:'boolean'}]}
+  ],
+  boss:{type:'bins',prompt:'BOSS: Sort EVERY value into its correct data type — 100% needed!',
+    bins:[{id:'int',label:'int',color:'#38e1ff'},{id:'double',label:'double',color:'#a855ff'},{id:'char',label:'char',color:'#ff8a5c'},{id:'boolean',label:'boolean',color:'#9bff5e'},{id:'String',label:'String',color:'#ffd23f'}],
+    items:[{label:'25',bin:'int'},{label:'4.5',bin:'double'},{label:"'A'",bin:'char'},{label:'true',bin:'boolean'},{label:'"Rahul"',bin:'String'}]}
+},
+{ id:4,title:'Input from User',icon:'⌨️',color:'#9bff5e',badge:'🎤',badgeName:'Input Explorer',xp:150,
+  objective:'Programs can listen! Learn how a Scanner reads what the user types.',
+  intro:{illus:'🎤',example:'Scanner sc = new Scanner(System.in);'},
+  learn:{illus:'🔁',
+    points:[{e:'❓',t:'ask',d:'Program prints a question'},{e:'⌨️',t:'type',d:'User types an answer'},{e:'📥',t:'Scanner',d:'Reads the answer into a box'}],
+    example:'System.out.println("Your name?");\nString name = sc.nextLine();',
+    exampleNote:'Ask → user types → Scanner stores it.'},
+  practice:[
+    {type:'arrange',prompt:'Put the conversation in the right order.',
+      blocks:['Program asks: "Name?"','User types: Rahul','Scanner reads the answer','Program prints: "Hi Rahul!"'],
+      answer:['Program asks: "Name?"','User types: Rahul','Scanner reads the answer','Program prints: "Hi Rahul!"']},
+    {type:'quiz',prompt:'What is a Scanner used for?',questions:[
+      {q:'Pick the best answer:',options:['To print colours','To read the user\'s input','To delete files','To draw shapes'],answer:1,explain:'Scanner reads what the user types in.'}]}
+  ],
+  boss:{type:'arrange',prompt:'BOSS: Complete the full interactive conversation in order.',
+    blocks:['Ask: "What is your name?"','User types their name','Scanner stores the name','Ask: "How old are you?"','User types their age','Print: "Nice to meet you!"'],
+    answer:['Ask: "What is your name?"','User types their name','Scanner stores the name','Ask: "How old are you?"','User types their age','Print: "Nice to meet you!"']}
+},
+{ id:5,title:'Operators',icon:'➕',color:'#ffd23f',badge:'🦸',badgeName:'Operator Hero',xp:160,
+  objective:'Turn your program into a calculator using math operators.',
+  intro:{illus:'🧮',example:'+   -   *   /   %'},
+  learn:{illus:'➗',
+    points:[{e:'➕',t:'+',d:'add'},{e:'➖',t:'-',d:'subtract'},{e:'✖️',t:'*',d:'multiply'},{e:'➗',t:'/',d:'divide'},{e:'🔁',t:'%',d:'remainder (modulo)'}],
+    example:'10 + 3 = 13\n10 % 3 = 1   // remainder',
+    exampleNote:'% gives what is left over after dividing.'},
+  practice:[
+    {type:'quiz',prompt:'Solve the calculations.',questions:[
+      {q:'7 + 5 = ?',options:['12','2','35','75'],answer:0,explain:'7 + 5 = 12'},
+      {q:'10 % 3 = ? (remainder)',options:['3','1','0','30'],answer:1,explain:'10 ÷ 3 = 3 remainder 1'}]}
+  ],
+  boss:{type:'quiz',prompt:'BOSS: Solve every calculation correctly — 100% needed!',
+    questions:[
+      {q:'6 * 4 = ?',options:['10','24','2','64'],answer:1,explain:'6 × 4 = 24'},
+      {q:'20 / 5 = ?',options:['4','15','100','5'],answer:0,explain:'20 ÷ 5 = 4'},
+      {q:'9 % 2 = ?',options:['0','4','1','18'],answer:2,explain:'9 ÷ 2 = 4 remainder 1'},
+      {q:'Which operator gives the remainder?',options:['/','*','%','+'],answer:2,explain:'% is the modulo (remainder) operator.'}]}
+},
+{ id:6,title:'Decision Making',icon:'🚦',color:'#ff8a5c',badge:'⚖️',badgeName:'Decision Maker',xp:170,
+  objective:'Teach your program to choose using if, else and else if.',
+  intro:{illus:'🚦',example:'if (age >= 18) { ... } else { ... }'},
+  learn:{illus:'🤔',
+    points:[{e:'✅',t:'if',d:'Do this when true'},{e:'🔀',t:'else if',d:'Otherwise, check again'},{e:'🚫',t:'else',d:'Do this when nothing matched'}],
+    example:'if (light == "red") stop();\nelse go();',
+    exampleNote:'The program picks a path based on a condition.'},
+  practice:[
+    {type:'quiz',prompt:'Choose the correct decision.',questions:[
+      {q:'The traffic light is RED. What should happen?',options:['Go fast','Stop','Turn around','Honk'],answer:1,explain:'Red means stop.'},
+      {q:'age = 20. if (age >= 18) → can vote?',options:['Yes, can vote','No, too young'],answer:0,explain:'20 is ≥ 18, so the if is true.'}]}
+  ],
+  boss:{type:'quiz',prompt:'BOSS: Pick the correct outcome for every scenario.',
+    questions:[
+      {q:'Movie is rated 18+. Person is 15. Allowed in?',options:['Allowed','Not allowed'],answer:1,explain:'15 is below 18 → the else path runs.'},
+      {q:'Temperature is 40°C. if (temp > 35) → ?',options:['"It\'s hot!"','"It\'s cold!"'],answer:0,explain:'40 > 35 is true.'},
+      {q:'age = 16, voting age 18. Result?',options:['Can vote','Cannot vote'],answer:1,explain:'16 < 18 → cannot vote.'},
+      {q:'if false, else runs?',options:['Yes, else runs','No, nothing runs'],answer:0,explain:'When if is false, else takes over.'}]}
+},
+{ id:7,title:'Switch Statements',icon:'🔀',color:'#38e1ff',badge:'🧙',badgeName:'Switch Wizard',xp:180,
+  objective:'Build menu-driven systems — like an ATM — by matching choices to actions.',
+  intro:{illus:'🏧',example:'switch(choice){ case 1: ... }'},
+  learn:{illus:'📋',
+    points:[{e:'1️⃣',t:'case 1',d:'One option → one action'},{e:'🔢',t:'many cases',d:'A menu of choices'},{e:'🚪',t:'break',d:'Exit after the match'}],
+    example:'switch(choice){\n  case 1: checkBalance();\n  case 2: deposit();\n}',
+    exampleNote:'Great for menus: ATM, restaurant, games.'},
+  practice:[
+    {type:'match',prompt:'Match each ATM menu option to its action.',
+      pairs:[{left:'1',right:'Check Balance'},{left:'2',right:'Deposit'},{left:'3',right:'Withdraw'}]}
+  ],
+  boss:{type:'match',prompt:'BOSS: Build the full ATM menu — match every option correctly.',
+    pairs:[{left:'1',right:'Check Balance'},{left:'2',right:'Deposit Cash'},{left:'3',right:'Withdraw Cash'},{left:'4',right:'Change PIN'},{left:'5',right:'Exit'}]}
+},
+{ id:8,title:'Loops',icon:'🔁',color:'#9bff5e',badge:'♾️',badgeName:'Loop Legend',xp:190,
+  objective:'Repeat actions without repeating yourself — meet the loop.',
+  intro:{illus:'🤖',example:'for (int i=0; i<5; i++) { ... }'},
+  learn:{illus:'🏃',
+    points:[{e:'🔁',t:'repeat',d:'Do something again and again'},{e:'🔢',t:'count',d:'Loop knows how many times'},{e:'🎯',t:'stop',d:'Stops when the goal is reached'}],
+    example:'for (int i=1; i<=3; i++)\n   waterPlant();   // runs 3 times',
+    exampleNote:'One loop can do the work of many lines.'},
+  practice:[
+    {type:'quiz',prompt:'How many repeats?',questions:[
+      {q:'You must water 5 plants. How many loop repeats?',options:['1','5','10','0'],answer:1,explain:'One repeat per plant → 5.'},
+      {q:'A robot takes 4 steps. Loop runs how many times?',options:['4','2','8','1'],answer:0,explain:'One step per repeat → 4.'}]}
+  ],
+  boss:{type:'quiz',prompt:'BOSS: Get the robot to the goal using the fewest loops.',
+    questions:[
+      {q:'Coin is 6 tiles away, robot moves 1 tile per loop. Minimum loops?',options:['3','6','12','1'],answer:1,explain:'6 tiles ÷ 1 per loop = 6 loops.'},
+      {q:'Collect 3 coins, one per repeat. Repeats needed?',options:['3','6','1','9'],answer:0,explain:'One coin per repeat → 3.'},
+      {q:'Robot moves 2 tiles per loop, goal is 8 tiles. Loops?',options:['8','2','4','16'],answer:2,explain:'8 ÷ 2 = 4 loops.'}]}
+},
+{ id:9,title:'Nested Loops & Patterns',icon:'✨',color:'#a855ff',badge:'🎨',badgeName:'Pattern Master',xp:220,
+  objective:'A loop inside a loop can draw shapes and patterns with stars.',
+  intro:{illus:'🔺',example:'*\n**\n***\n****'},
+  learn:{illus:'⭐',
+    points:[{e:'🔁',t:'outer loop',d:'Chooses each row'},{e:'🔂',t:'inner loop',d:'Prints stars in that row'},{e:'🔺',t:'pattern',d:'Together they build shapes'}],
+    example:'for row 1..4:\n   print "*" row times',
+    exampleNote:'Row 1 → *   Row 2 → **   Row 3 → ***'},
+  practice:[
+    {type:'arrange',prompt:'Arrange the rows to build a growing triangle.',
+      blocks:['*','**','***','****'],answer:['*','**','***','****']}
+  ],
+  boss:{type:'arrange',prompt:'BOSS: Order every row to complete the full star pyramid.',
+    blocks:['*','**','***','****','*****'],answer:['*','**','***','****','*****']}
+},
+{ id:10,title:'Code Quest Castle',icon:'🏰',color:'#ffd23f',badge:'🏆',badgeName:'Code Quest Champion',xp:400,final:true,
+  objective:'The final trial! One challenge from every skill you have mastered.',
+  intro:{illus:'🏰',example:'Everything you learned — one epic gauntlet.'},
+  learn:{illus:'🗝️',
+    points:[{e:'🧠',t:'recall',d:'Every topic returns'},{e:'⚔️',t:'gauntlet',d:'Clear them all in a row'},{e:'🏆',t:'champion',d:'Earn your certificate'}],
+    example:'Print • Variables • Types • Input\nOperators • Decisions • Switch • Loops • Patterns',
+    exampleNote:'Score 100% to become a Code Quest Champion.'},
+  practice:[],
+  boss:{type:'gauntlet',prompt:'FINAL BOSS: Solve one challenge from every skill.',
+    stages:[
+      {type:'arrange',prompt:'① Hello World — arrange the blocks.',blocks:['System.out',' .println(','"Hello!"',' );'],answer:['System.out',' .println(','"Hello!"',' );']},
+      {type:'bins',prompt:'② Variables — sort the values.',bins:[{id:'name',label:'name',color:'#38e1ff'},{id:'age',label:'age',color:'#9bff5e'}],items:[{label:'"Sara"',bin:'name'},{label:'21',bin:'age'}]},
+      {type:'bins',prompt:'③ Data types — sort by type.',bins:[{id:'int',label:'int',color:'#38e1ff'},{id:'boolean',label:'boolean',color:'#ff8a5c'},{id:'String',label:'String',color:'#9bff5e'}],items:[{label:'7',bin:'int'},{label:'false',bin:'boolean'},{label:'"Hi"',bin:'String'}]},
+      {type:'quiz',prompt:'④ Input',questions:[{q:'Scanner is used to…',options:['Read user input','Print stars'],answer:0,explain:'Scanner reads input.'}]},
+      {type:'quiz',prompt:'⑤ Operators',questions:[{q:'8 % 3 = ?',options:['2','5','1'],answer:0,explain:'8÷3 = 2 remainder 2.'}]},
+      {type:'quiz',prompt:'⑥ Decisions',questions:[{q:'age 19, voting age 18 →',options:['Can vote','Cannot vote'],answer:0,explain:'19 ≥ 18.'}]},
+      {type:'match',prompt:'⑦ Switch — match the menu.',pairs:[{left:'1',right:'Start'},{left:'2',right:'Options'},{left:'3',right:'Quit'}]},
+      {type:'quiz',prompt:'⑧ Loops',questions:[{q:'Move 5 tiles, 1 per loop →',options:['5 loops','1 loop'],answer:0,explain:'5 tiles → 5 loops.'}]},
+      {type:'arrange',prompt:'⑨ Patterns — order the rows.',blocks:['*','**','***'],answer:['*','**','***']}
+    ]}
+}
+];
+
+/* ============================================================
+   STATE (in-memory only — works in artifact + when deployed)
+   ============================================================ */
+const state={
+  screen:'welcome', name:'', email:'', program:'', college:'', batch:'', theme:'light', muted:false,
+  xp:0, progress:{}, // id -> {done:true, stars:n}
+  curId:null, phase:'intro', practiceIdx:0, session:null
+};
+document.documentElement.dataset.theme=state.theme;
+
+const unlockedMax=()=>{let m=1;for(const l of LEVELS){if(state.progress[l.id]&&state.progress[l.id].done)m=Math.max(m,l.id+1);}return m;};
+const isUnlocked=id=>id<=unlockedMax();
+const levelById=id=>LEVELS.find(l=>l.id===id);
+
+/* ============================================================
+   PUZZLE ENGINES  — each returns {el, check(), hint(), lock()}
+   ============================================================ */
+
+// live-reorder sortable used by ARRANGE
+function makeSortable(list,onChange){
+  let dragging=null,ghost=null,offX=0,offY=0;
+  function down(e){
+    const item=e.target.closest('.dragitem');if(!item||item.dataset.locked)return;
+    e.preventDefault();Audio_.pick();dragging=item;
+    const r=item.getBoundingClientRect();offX=e.clientX-r.left;offY=e.clientY-r.top;
+    ghost=item.cloneNode(true);ghost.className='dragitem drag-ghost';
+    ghost.style.width=r.width+'px';ghost.style.left=r.left+'px';ghost.style.top=r.top+'px';
+    document.body.appendChild(ghost);item.classList.add('placeholder');
+    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);
+  }
+  function move(e){
+    ghost.style.left=(e.clientX-offX)+'px';ghost.style.top=(e.clientY-offY)+'px';
+    const sibs=[...list.querySelectorAll('.dragitem:not(.placeholder)')];let after=null;
+    for(const s of sibs){const r=s.getBoundingClientRect();if(e.clientY<r.top+r.height/2){after=s;break;}}
+    if(after)list.insertBefore(dragging,after);else list.appendChild(dragging);
+  }
+  function up(){ghost.remove();ghost=null;dragging.classList.remove('placeholder');
+    dragging.classList.add('pop');const d=dragging;setTimeout(()=>d.classList.remove('pop'),300);
+    dragging=null;document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
+    renumber();onChange&&onChange();}
+  function renumber(){[...list.querySelectorAll('.dragitem')].forEach((it,i)=>{const n=it.querySelector('.num');if(n)n.textContent=i+1;});}
+  list.addEventListener('pointerdown',down);
+  return{renumber};
+}
+
+function engineArrange(p){
+  const root=el('div');
+  const list=el('div','draglist');list.setAttribute('role','listbox');
+  const start=shuffle(p.blocks);
+  start.forEach((b,i)=>{
+    const it=el('div','dragitem');it.tabIndex=0;it.dataset.val=b;
+    it.innerHTML=`<span class="num">${i+1}</span><span style="flex:1">${hi(b)}</span><span class="grip">⣿</span>`;
+    it.addEventListener('keydown',e=>{
+      if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();
+        const prev=it.previousElementSibling,next=it.nextElementSibling;
+        if(e.key==='ArrowUp'&&prev)list.insertBefore(it,prev);
+        if(e.key==='ArrowDown'&&next)list.insertBefore(next,it);
+        sort.renumber();it.focus();Audio_.pick();}
+    });
+    list.appendChild(it);
+  });
+  const sort=makeSortable(list);
+  root.appendChild(list);
+  return{el:root,
+    check(){const order=[...list.querySelectorAll('.dragitem')].map(i=>i.dataset.val);
+      const ok=order.length===p.answer.length&&order.every((v,i)=>v===p.answer[i]);
+      return{correct:ok,message:ok?'Perfect order! 🎯':'Not quite — check the sequence.'};},
+    hint(){return 'The first block should be: '+p.answer[0];},
+    lock(){list.querySelectorAll('.dragitem').forEach(i=>i.dataset.locked='1');}};
+}
+
+function engineBins(p){
+  const root=el('div');
+  const pool=el('div','pool empty dropzone');pool.dataset.zone='pool';
+  const items=shuffle(p.items);
+  const binsWrap=el('div','bins');
+  const binEls={};
+  p.bins.forEach(b=>{
+    const bin=el('div','bin dropzone');bin.dataset.zone=b.id;
+    bin.innerHTML=`<div class="bin-title"><span class="dot" style="background:${b.color}"></span>${esc(b.label)}</div>`;
+    const drop=el('div','drop dropzone');drop.dataset.zone=b.id;bin.appendChild(drop);
+    binEls[b.id]=drop;binsWrap.appendChild(bin);
+  });
+  let selected=null;
+  function place(chip,zoneEl){zoneEl.appendChild(chip);syncEmpty();Audio_.pick();}
+  function syncEmpty(){pool.classList.toggle('empty',pool.children.length===0);}
+  items.forEach(it=>{
+    const chip=el('div','chip');chip.tabIndex=0;chip.dataset.correct=it.bin;chip.innerHTML=hi(it.label);
+    enableDrag(chip,{
+      onDrop(target){const zone=target&&target.closest('.dropzone');if(zone)place(chip,zone);}});
+    chip.addEventListener('click',()=>{ // tap fallback
+      if(chip.dataset.locked||chip._sup)return;
+      if(selected===chip){chip.classList.remove('selected');selected=null;return;}
+      if(selected)selected.classList.remove('selected');
+      selected=chip;chip.classList.add('selected');Audio_.click();
+    });
+    chip.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();chip.click();}});
+    pool.appendChild(chip);
+  });
+  // tap a bin to drop the selected chip
+  [pool,...Object.values(binEls)].forEach(z=>{
+    z.addEventListener('click',e=>{if(selected&&!e.target.closest('.chip')){place(selected,z);selected.classList.remove('selected');selected=null;}});
+  });
+  syncEmpty();
+  root.appendChild(el('div','muted',`<div style="margin:0 0 8px;font-weight:700">Drag each value into its box (or tap a value, then tap a box).</div>`));
+  root.appendChild(pool);root.appendChild(binsWrap);
+  return{el:root,
+    check(){let allPlaced=true,allRight=true;
+      root.querySelectorAll('.chip').forEach(c=>{
+        const parent=c.parentElement.dataset.zone;
+        if(parent==='pool'){allPlaced=false;}
+        else if(parent!==c.dataset.correct){allRight=false;}
+      });
+      if(!allPlaced)return{correct:false,message:'Place every value in a box first.'};
+      return{correct:allRight,message:allRight?'Every value sorted correctly! 🎯':'Some values are in the wrong box.'};},
+    hint(){const c=[...root.querySelectorAll('.chip')].find(x=>x.parentElement.dataset.zone==='pool')||root.querySelector('.chip');
+      return `${c.textContent} belongs in the "${c.dataset.correct}" box.`;},
+    lock(){root.querySelectorAll('.chip').forEach(c=>c.dataset.locked='1');}};
+}
+
+function engineMatch(p){
+  const root=el('div');
+  const wrap=el('div','match');
+  const left=el('div','mcol'),right=el('div','mcol');
+  const rights=shuffle(p.pairs.map(x=>x.right));
+  const colors=['#ff4d9d','#38e1ff','#9bff5e','#ffd23f','#a855ff'];
+  let selLeft=null;const links={}; // leftVal -> rightVal
+  const rightEls={};
+  rights.forEach((r,i)=>{const c=el('div','mcell');c.tabIndex=0;c.dataset.val=r;c.textContent=r;
+    c.addEventListener('click',()=>{
+      if(!selLeft||c.dataset.locked)return;
+      // remove any previous link to this right or from this left
+      Object.keys(links).forEach(k=>{if(links[k]===r)delete links[k];});
+      links[selLeft.dataset.val]=r;paint();Audio_.pick();
+      selLeft.classList.remove('sel');selLeft=null;});
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();c.click();}});
+    rightEls[r]=c;right.appendChild(c);});
+  p.pairs.forEach((pr,i)=>{const c=el('div','mcell');c.tabIndex=0;c.dataset.val=pr.left;c.dataset.color=colors[i%colors.length];
+    c.innerHTML=`Option ${esc(pr.left)}`;
+    c.addEventListener('click',()=>{if(c.dataset.locked)return;if(selLeft)selLeft.classList.remove('sel');
+      selLeft=c;c.classList.add('sel');Audio_.click();});
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();c.click();}});
+    left.appendChild(c);});
+  function paint(){
+    // reset
+    left.querySelectorAll('.mcell').forEach(c=>{c.classList.remove('linked');const t=c.querySelector('.tag');if(t)t.remove();});
+    right.querySelectorAll('.mcell').forEach(c=>c.classList.remove('linked'));
+    Object.entries(links).forEach(([l,r])=>{
+      const lc=[...left.children].find(x=>x.dataset.val===l);const rc=rightEls[r];
+      if(lc){lc.classList.add('linked');const tag=el('span','tag','→ '+r);tag.style.background=lc.dataset.color;lc.appendChild(tag);}
+      if(rc)rc.classList.add('linked');
+    });
+  }
+  wrap.appendChild(left);wrap.appendChild(right);
+  root.appendChild(el('div','muted','<div style="margin:0 0 8px;font-weight:700">Tap an option on the left, then tap its matching action on the right.</div>'));
+  root.appendChild(wrap);
+  return{el:root,
+    check(){const done=Object.keys(links).length===p.pairs.length;
+      if(!done)return{correct:false,message:'Match every option first.'};
+      const ok=p.pairs.every(pr=>links[pr.left]===pr.right);
+      return{correct:ok,message:ok?'All matched perfectly! 🎯':'Some matches are wrong.'};},
+    hint(){const pr=p.pairs.find(x=>links[x.left]!==x.right)||p.pairs[0];return `Option ${pr.left} → ${pr.right}`;},
+    lock(){root.querySelectorAll('.mcell').forEach(c=>c.dataset.locked='1');}};
+}
+
+function engineQuiz(p){
+  const root=el('div');const picks={};
+  p.questions.forEach((qq,qi)=>{
+    const block=el('div','qblock');
+    block.innerHTML=`<div class="q">${esc(qq.q)}</div>`+(qq.code?`<div class="code">${hi(qq.code)}</div><div style="height:8px"></div>`:'');
+    const opts=el('div','opts');
+    shuffleIdx(qq.options.length).forEach(oi=>{
+      const b=el('button','opt');b.type='button';b.textContent=qq.options[oi];b.dataset.qi=qi;b.dataset.oi=oi;
+      b.addEventListener('click',()=>{if(b.dataset.locked)return;
+        opts.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel');picks[qi]=oi;Audio_.click();});
+      opts.appendChild(b);
+    });
+    block.appendChild(opts);root.appendChild(block);
+  });
+  function shuffleIdx(n){return shuffle([...Array(n).keys()]);}
+  return{el:root,
+    check(){if(Object.keys(picks).length<p.questions.length)return{correct:false,message:'Answer every question first.'};
+      let ok=true;p.questions.forEach((qq,qi)=>{
+        const chosen=picks[qi];const btns=[...root.querySelectorAll(`.opt[data-qi="${qi}"]`)];
+        btns.forEach(b=>{b.classList.remove('correct','wrong');
+          const oi=+b.dataset.oi;
+          if(oi===qq.answer)b.classList.add('correct');
+          if(oi===chosen&&chosen!==qq.answer){b.classList.add('wrong');ok=false;}});
+      });
+      return{correct:ok,message:ok?'All answers correct! 🎯':'Check the highlighted answers.'};},
+    hint(){const qq=p.questions.find((q,i)=>picks[i]!==q.answer)||p.questions[0];return qq.explain;},
+    lock(){root.querySelectorAll('.opt').forEach(b=>b.dataset.locked='1');}};
+}
+
+// shared floating-drag helper (mouse + touch) for chips
+function enableDrag(node,{onDrop}){
+  node.addEventListener('pointerdown',e=>{
+    if(node.dataset.locked)return;if(e.button&&e.button!==0)return;
+    e.preventDefault();Audio_.pick();
+    const r=node.getBoundingClientRect(),offX=e.clientX-r.left,offY=e.clientY-r.top;
+    const sx=e.clientX,sy=e.clientY;let moved=false;
+    const ghost=node.cloneNode(true);ghost.classList.add('drag-ghost');
+    ghost.style.width=r.width+'px';document.body.appendChild(ghost);node.style.opacity='.35';
+    let lastZone=null;
+    const move=ev=>{ghost.style.left=(ev.clientX-offX)+'px';ghost.style.top=(ev.clientY-offY)+'px';
+      if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6)moved=true;
+      const t=document.elementFromPoint(ev.clientX,ev.clientY);const z=t&&t.closest('.dropzone');
+      if(lastZone&&lastZone!==z)lastZone.classList.remove('hover');
+      if(z){z.classList.add('hover');lastZone=z;}};
+    move(e);
+    const up=ev=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
+      ghost.remove();node.style.opacity='';if(lastZone)lastZone.classList.remove('hover');
+      if(moved){node._sup=true;setTimeout(()=>{node._sup=false;},350);
+        const t=document.elementFromPoint(ev.clientX,ev.clientY);onDrop(t);}};
+    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);
+  });
+}
+
+function mountPuzzle(p){
+  if(p.type==='arrange')return engineArrange(p);
+  if(p.type==='bins')return engineBins(p);
+  if(p.type==='match')return engineMatch(p);
+  if(p.type==='quiz')return engineQuiz(p);
+  return engineQuiz({prompt:'',questions:[{q:'?',options:['ok'],answer:0,explain:''}]});
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const app=$('#app');
+function render(){
+  app.innerHTML='';
+  app.appendChild(topbar());
+  if(state.screen==='welcome')app.appendChild(screenWelcome());
+  else if(state.screen==='select')app.appendChild(screenSelect());
+  else if(state.screen==='map')app.appendChild(screenMap());
+  else if(state.screen==='level')app.appendChild(screenLevel());
+  else if(state.screen==='finale')app.appendChild(screenFinale());
+  else if(state.screen==='atm')app.appendChild(screenATM());
+  else if(state.screen.indexOf('web')===0)app.appendChild(screenWeb());
+}
+function topbar(){
+  const bar=el('div','topbar glass');
+  bar.innerHTML=`<div class="brand"><span class="logo">🚀</span><div>Level Up<small>Learn to build, one level at a time</small></div></div><div class="spacer"></div>`;
+  if(state.name){const xp=el('div','xp-chip',`<span class="star">✦</span> ${state.xp} XP`);bar.appendChild(xp);}
+  const mute=el('button','iconbtn',state.muted?'🔇':'🔊');mute.title='Toggle sound';mute.setAttribute('aria-label','Toggle sound');
+  mute.onclick=()=>{state.muted=!state.muted;Audio_.click();render();};
+  bar.appendChild(mute);
+  // contextual map button inside the Java quest
+  if(state.name&&(state.screen==='level'||state.screen==='finale'||state.screen==='atm')){
+    const map=el('button','iconbtn','🗺️');map.title='Quest map';map.setAttribute('aria-label','Back to Java quest map');
+    map.onclick=()=>{state.screen='map';Audio_.click();render();};bar.appendChild(map);
+  }
+  // home button returns to the quest chooser
+  if(state.name&&state.screen!=='welcome'&&state.screen!=='select'){
+    const home=el('button','iconbtn','🏠');home.title='Choose a challenge';home.setAttribute('aria-label','Back to challenge chooser');
+    home.onclick=()=>{state.screen='select';Audio_.click();render();};bar.appendChild(home);
+  }
+  return bar;
+}
+
+/* ---- WELCOME ---- */
+/* ============================================================
+   GOOGLE SHEETS INTEGRATION
+   Progress is saved to a Google Sheet via Apps Script web app.
+   Paste APPS_SCRIPT_URL once you've deployed the Apps Script.
+   Until then the app works fully offline (in-memory only).
+   ============================================================ */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzse_zLN5iR5zwiKOWMnLlkCfgb-I0StbskZdqur4JwSmfVdO6SUc41L3RMZOax9wNAw/exec';
+const GS_ACTIVE = APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL';
+
+/* ---- helpers ---- */
+function collectProgress(){
+  const w=state.web, L=w&&w.lessons;
+  return {
+    name:        state.name,
+    email:       state.email,
+    program:     state.program,
+    college:     state.college,
+    batch:       state.batch,
+    html_done:   L ? L.html.done.filter(Boolean).length : 0,
+    css_done:    L ? L.css.done.filter(Boolean).length  : 0,
+    js_done:     L ? L.js.done.filter(Boolean).length   : 0,
+    instagram:   !!(w&&w.done),
+    java_levels: Object.values(state.progress||{}).filter(p=>p&&p.done).length,
+    atm_done:    !!(state.atm&&state.atm.done)||!!state._atmDoneRestored,
+    xp:          state.xp||0
+  };
+}
+
+async function syncProgress(){
+  if(!GS_ACTIVE||!state.email||!state.college) return;
+  try{
+    const p=collectProgress();
+    const params=new URLSearchParams({
+      action:'save',name:p.name,email:p.email,program:p.program,
+      college:p.college,batch:p.batch,
+      html_done:p.html_done,css_done:p.css_done,js_done:p.js_done,
+      instagram:p.instagram,java_levels:p.java_levels,
+      atm_done:p.atm_done,xp:p.xp
+    });
+    const url=APPS_SCRIPT_URL+'?'+params.toString();
+    const r=await fetch(url,{redirect:'follow'});
+    const j=await r.json();
+    if(j.status!=='ok') console.warn('syncProgress server error',j);
+  } catch(e){ console.warn('syncProgress failed',e); }
+}
+
+async function loadProgress(){
+  if(!GS_ACTIVE||!state.email||!state.college) return null;
+  try{
+    const url=`${APPS_SCRIPT_URL}?action=get&email=${encodeURIComponent(state.email)}&college=${encodeURIComponent(state.college)}`;
+    const r=await fetch(url,{redirect:'follow'}); const j=await r.json();
+    if(j.status==='ok'&&j.data) return j.data;
+  } catch(e){ console.warn('loadProgress failed',e); }
+  return null;
+}
+
+function applyProgress(p){
+  if(!p) return;
+  state.xp = p.xp||0;
+  if(p.java_levels>0){
+    for(let i=0;i<Math.min(p.java_levels,LEVELS.length);i++)
+      if(!state.progress[i]) state.progress[i]={done:true,stars:1};
+  }
+  if(p.atm_done) state._atmDoneRestored=true;
+  ensureWeb();
+  const fill=(track,n)=>{for(let i=0;i<n;i++)state.web.lessons[track].done[i]=true;};
+  fill('html', Math.min(p.html_done||0,10));
+  fill('css',  Math.min(p.css_done||0,10));
+  fill('js',   Math.min(p.js_done||0,10));
+  if(p.instagram) state.web.done=true;
+}
+
+/* ---- boot: always show form (see comment) ---- */
+async function sbBoot(){
+  /* Always show the welcome form on every visit.
+     Returning students get their progress restored from the sheet
+     when they enter their email + college (see go() in the form).
+     This avoids one student's session loading for another on shared computers. */
+  return false;
+}
+
+
+const COLLEGES=['ADTU','CUH','SAGE Indore','SAGE Bhopal','DRK','Hitech','IITM','SRMU','VGUJ','RBU','RGI','TIPS','RGU'];
+const PROGRAMS=['B.Tech','BCA','MCA'];
+const PROG_DURATION={'B.Tech':4,'BCA':3,'MCA':2};
+
+function buildBatchOptions(program){
+  const dur=PROG_DURATION[program]||4;
+  const opts=['<option value="">Select batch…</option>'];
+  for(let y=2022;y<=2028;y++) opts.push(`<option value="${y}-${y+dur}">${y}–${y+dur}</option>`);
+  return opts.join('');
+}
+
+function screenWelcome(){
+  if(GS_ACTIVE) {} // Google Sheets active — form submit saves to sheet
+  const c=el('div','hero glass card');
+  c.innerHTML=`
+    <div class="mascot">🚀</div>
+    <h1>Level Up</h1>
+    <p class="muted" style="max-width:540px;margin:6px auto 0;font-weight:600;font-size:1.05rem">
+      Learn to code by playing. Choose the <b>Web Challenge</b> to build your Instagram profile, or the <b>Code Challenge</b> to master Java.</p>
+    <div class="namefield">
+      <span class="field-label">Your Name</span>
+      <input id="wName" maxlength="40" placeholder="Full name…" autocomplete="off" />
+      <span class="field-label">Email ID</span>
+      <input id="wEmail" type="email" maxlength="80" placeholder="you@college.edu" autocomplete="off" />
+      <span class="field-label">College</span>
+      <select id="wCollege">
+        <option value="">Select college…</option>
+        ${COLLEGES.map(col=>`<option value="${col}">${col}</option>`).join('')}
+      </select>
+      <span class="field-label">Program</span>
+      <select id="wProgram">
+        <option value="">Select program…</option>
+        ${PROGRAMS.map(p=>`<option value="${p}">${p}</option>`).join('')}
+      </select>
+      <span class="field-label">Batch</span>
+      <select id="wBatch" disabled>
+        <option value="">Select program first…</option>
+      </select>
+    </div>
+    <div style="margin-top:22px"><button class="btn" id="startBtn" disabled>Start Building 🚀</button></div>`;
+  setTimeout(()=>{
+    const name=$('#wName'),email=$('#wEmail'),coll=$('#wCollege'),prog=$('#wProgram'),batch=$('#wBatch'),btn=$('#startBtn');
+    const validate=()=>{
+      const ok=name.value.trim().length>0&&/\S+@\S+\.\S+/.test(email.value.trim())&&coll.value&&prog.value&&batch.value;
+      btn.disabled=!ok;
+    };
+    prog.addEventListener('change',()=>{
+      if(prog.value){
+        batch.innerHTML=buildBatchOptions(prog.value);
+        batch.disabled=false;
+      } else {
+        batch.innerHTML='<option value="">Select program first…</option>';
+        batch.disabled=true;
+      }
+      validate();
+    });
+    [name,email,coll,batch].forEach(e=>e.addEventListener('input',validate));
+    prog.addEventListener('input',validate);
+    const go=async()=>{
+      if(btn.disabled)return;
+      Audio_.ensure();
+      state.name=name.value.trim();
+      state.email=email.value.trim();
+      state.college=coll.value;
+      state.program=prog.value;
+      state.batch=batch.value;
+      // persist identity for auto-login on return visits
+      localStorage.setItem('lu_student', JSON.stringify({
+        name:state.name, email:state.email, college:state.college,
+        program:state.program, batch:state.batch
+      }));
+      // go immediately — don't wait for sheet
+      state.screen='select'; Audio_.unlock(); render(); startQuoteTimer();
+      // load progress in background; register new students right away
+      loadProgress().then(p=>{
+        if(p){ applyProgress(p); render(); toast('Welcome back, '+state.name+'! Progress restored ✅'); }
+        else { syncProgress(); } // new student — write initial row now
+      }).catch(()=>{ syncProgress(); });
+    };
+    btn.onclick=go;
+    name.addEventListener('keydown',e=>{if(e.key==='Enter')email.focus();});
+    email.addEventListener('keydown',e=>{if(e.key==='Enter')coll.focus();});
+    name.focus();
+  },30);
+  return c;
+}
+
+/* ---- QUEST MAP ---- */
+function screenMap(){
+  const box=el('div');
+  const head=el('div','map-head glass card');
+  const done=Object.values(state.progress).filter(p=>p.done).length;
+  head.innerHTML=`<div><div class="eyebrow">Welcome back, hero</div><h2>${esc(state.name)}'s Quest Map</h2>
+    <div class="muted" style="font-weight:600">${done} / ${LEVELS.length} quests cleared • ${state.xp} XP earned</div></div>
+    <div style="text-align:right"><div class="stars-big" style="font-size:26px">${'⭐'.repeat(Math.min(done,5))||'✨'}</div></div>`;
+  box.appendChild(head);
+
+  const path=el('div','path glass card');
+  const atmDone=!!(state.atm&&state.atm.done)||!!state._atmDoneRestored;
+  LEVELS.forEach((l,idx)=>{
+    const row=el('div','node-row');
+    row.appendChild(el('div','connector'));
+    const prog=state.progress[l.id];
+    // The Final Castle also needs the ATM project finished first.
+    let unlocked=isUnlocked(l.id);
+    if(l.final)unlocked=unlocked&&atmDone;
+    const node=el('button','node '+(prog&&prog.done?'done':unlocked?'unlocked':'locked'));
+    node.setAttribute('aria-label',`Level ${l.id}: ${l.title} ${prog&&prog.done?'(completed)':unlocked?'(unlocked)':'(locked)'}`);
+    node.innerHTML=`<span class="lvl-badge">${l.final?'★':l.id}</span>${prog&&prog.done?'✅':unlocked?l.icon:'🔒'}`;
+    node.onclick=()=>{
+      if(!unlocked){Audio_.wrong();node.classList.add('shake');setTimeout(()=>node.classList.remove('shake'),400);
+        toast(l.final&&isUnlocked(l.id)?'🔒 Finish the ATM Project first!':'🔒 Clear the previous quest first!');return;}
+      Audio_.click();openLevel(l.id);
+    };
+    const info=el('div','node-info');
+    const stars=prog?prog.stars:0;
+    info.innerHTML=`<div class="t">${l.final?'👑 ':''}${esc(l.title)}</div><div class="d">${esc(l.objective)}</div>
+      <div class="node-stars">${[1,2,3].map(i=>`<span class="${i<=stars?'':'off'}">★</span>`).join('')}</div>`;
+    row.appendChild(node);row.appendChild(info);
+    path.appendChild(row);
+
+    // ----- After Level 9, insert the ATM capstone project node -----
+    if(l.id===9){
+      ensureATM();
+      const arow=el('div','node-row');
+      arow.appendChild(el('div','connector'));
+      const aUnlocked=!!(state.progress[9]&&state.progress[9].done);
+      const aDone=state.atm.done;
+      const anode=el('button','node '+(aDone?'done':aUnlocked?'unlocked':'locked'));
+      anode.setAttribute('aria-label',`ATM Project ${aDone?'(completed)':aUnlocked?'(unlocked)':'(locked)'}`);
+      anode.innerHTML=`<span class="lvl-badge" style="background:#0095f6">🏧</span>${aDone?'✅':aUnlocked?'🏧':'🔒'}`;
+      anode.onclick=()=>{
+        if(!aUnlocked){Audio_.wrong();anode.classList.add('shake');setTimeout(()=>anode.classList.remove('shake'),400);toast('🔒 Clear Level 9 first!');return;}
+        Audio_.click();state.screen='atm';render();
+      };
+      const ainfo=el('div','node-info');
+      ainfo.innerHTML=`<div class="t">🏧 Capstone: Build an ATM</div>
+        <div class="d">Use every concept you learned to build a real ATM machine — 10 stages.</div>
+        <div class="node-stars" style="color:var(--cyan)">${aDone?'✅ Completed':aUnlocked?'▶ Ready to build':'Locked'}</div>`;
+      arow.appendChild(anode);arow.appendChild(ainfo);
+      path.appendChild(arow);
+    }
+  });
+  box.appendChild(path);
+  return box;
+}
+
+/* ---- LEVEL flow ---- */
+function openLevel(id){
+  state.curId=id;state.phase='intro';state.practiceIdx=0;
+  state.session={hints:0,misses:0,gauntletIdx:0};
+  state.screen='level';render();
+}
+const PHASES=['intro','learn','practice','boss','complete'];
+function phaseIndex(){return PHASES.indexOf(state.phase);}
+
+function screenLevel(){
+  const l=levelById(state.curId);
+  const box=el('div','lvl-shell');
+  // phase progress bar
+  const bar=el('div','phase-bar');
+  ['Intro','Learn','Practice','Boss','Done'].forEach((_,i)=>{
+    const seg=el('div','seg'+(i<phaseIndex()?' done':i===phaseIndex()?' active':''));
+    seg.appendChild(el('div','fill'));bar.appendChild(seg);
+  });
+  box.appendChild(bar);
+
+  if(state.phase==='intro')box.appendChild(phaseIntro(l));
+  else if(state.phase==='learn')box.appendChild(phaseLearn(l));
+  else if(state.phase==='practice')box.appendChild(phasePractice(l));
+  else if(state.phase==='boss')box.appendChild(phaseBoss(l));
+  else if(state.phase==='complete')box.appendChild(phaseComplete(l));
+  return box;
+}
+
+function phaseIntro(l){
+  const c=el('div','card glass center');
+  c.innerHTML=`
+    <div class="eyebrow">${l.final?'Final Level':'Level '+l.id}</div>
+    <div class="illus" style="font-size:72px">${l.intro.illus}</div>
+    <h1 style="color:${l.color}">${esc(l.title)}</h1>
+    <p class="muted" style="max-width:520px;margin:0 auto;font-weight:600;font-size:1.05rem">${esc(l.objective)}</p>
+    <div class="code" style="text-align:left;max-width:460px;margin:20px auto 0">${hi(l.intro.example)}</div>`;
+  const btn=el('button','btn',(l.final?'Enter the Castle 🏰':'Let\'s Learn 📖'));
+  btn.style.marginTop='22px';btn.onclick=()=>{state.phase='learn';Audio_.click();render();};
+  c.appendChild(btn);
+  return c;
+}
+
+function phaseLearn(l){
+  const c=el('div','card glass');
+  c.innerHTML=`<div class="eyebrow">Learn</div><h2>How it works</h2>
+    <div class="illus">${l.learn.illus}</div>`;
+  const grid=el('div','concept-grid');
+  l.learn.points.forEach(p=>{grid.appendChild(el('div','concept',`<span class="big">${p.e}</span><b>${esc(p.t)}</b><div class="muted" style="font-weight:600;font-size:.9rem">${esc(p.d)}</div>`));});
+  c.appendChild(grid);
+  c.appendChild(el('div','code',hi(l.learn.example)));
+  if(l.learn.exampleNote)c.appendChild(el('div','muted',`<div style="margin-top:10px;font-weight:700">👉 ${esc(l.learn.exampleNote)}</div>`));
+  const foot=el('div','footbar');
+  const btn=el('button','btn cyan',l.final?'Begin Final Boss ⚔️':'Start Practice 🎮');
+  btn.onclick=()=>{Audio_.click();if(l.final){state.phase='boss';}else{state.phase='practice';state.practiceIdx=0;}render();};
+  foot.appendChild(btn);c.appendChild(foot);
+  return c;
+}
+
+function buildPuzzleCard(p,label,color){
+  const c=el('div','card glass');
+  c.innerHTML=`<div class="eyebrow" style="color:${color||'var(--magenta)'}">${label}</div><div class="prompt">${esc(p.prompt)}</div>`;
+  const puzzle=mountPuzzle(p);c.appendChild(puzzle.el);
+  const fb=el('div','feedback');c.appendChild(fb);
+  const hintbox=el('div','hintbox');c.appendChild(hintbox);
+  const foot=el('div','footbar');c.appendChild(foot);
+  return{c,puzzle,fb,hintbox,foot};
+}
+function showFeedback(fb,ok,msg){fb.className='feedback show '+(ok?'good':'bad');fb.innerHTML=(ok?'✅ ':'❌ ')+esc(msg);}
+
+function phasePractice(l){
+  const p=l.practice[state.practiceIdx];
+  const {c,puzzle,fb,hintbox,foot}=buildPuzzleCard(p,`Practice ${state.practiceIdx+1} / ${l.practice.length}`,l.color);
+  const hintBtn=el('button','btn ghost sm','💡 Hint');
+  hintBtn.onclick=()=>{state.session.hints++;hintbox.className='hintbox show';hintbox.innerHTML='💡 '+esc(puzzle.hint());Audio_.click();};
+  const checkBtn=el('button','btn','Check ✓');
+  const nextBtn=el('button','btn cyan',(state.practiceIdx<l.practice.length-1?'Next →':'Boss Challenge ⚔️'));
+  nextBtn.style.display='none';
+  checkBtn.onclick=()=>{const r=puzzle.check();
+    if(r.correct){Audio_.correct();showFeedback(fb,true,r.message);puzzle.lock();checkBtn.style.display='none';hintBtn.style.display='none';nextBtn.style.display='';cheer();}
+    else{Audio_.wrong();showFeedback(fb,false,r.message);c.classList.add('shake');setTimeout(()=>c.classList.remove('shake'),400);}
+  };
+  nextBtn.onclick=()=>{Audio_.click();if(state.practiceIdx<l.practice.length-1){state.practiceIdx++;render();}else{state.phase='boss';render();}};
+  foot.appendChild(checkBtn);foot.appendChild(hintBtn);foot.appendChild(nextBtn);
+  return c;
+}
+
+function phaseBoss(l){
+  if(l.boss.type==='gauntlet')return phaseGauntlet(l);
+  const {c,puzzle,fb,hintbox,foot}=buildPuzzleCard(l.boss,'⚔️ Boss Challenge — score 100%','var(--gold)');
+  const hintBtn=el('button','btn ghost sm','💡 Hint');
+  hintBtn.onclick=()=>{state.session.hints++;hintbox.className='hintbox show';hintbox.innerHTML='💡 '+esc(puzzle.hint());Audio_.click();};
+  const checkBtn=el('button','btn gold','Defeat Boss ⚔️');
+  checkBtn.onclick=()=>{const r=puzzle.check();
+    if(r.correct){Audio_.win();showFeedback(fb,true,'Boss defeated! '+r.message);puzzle.lock();completeLevel(l);}
+    else{Audio_.wrong();state.session.misses++;showFeedback(fb,false,r.message);c.classList.add('shake');setTimeout(()=>c.classList.remove('shake'),400);}
+  };
+  foot.appendChild(checkBtn);foot.appendChild(hintBtn);
+  return c;
+}
+
+// Final castle: sequential gauntlet
+function phaseGauntlet(l){
+  const stages=l.boss.stages;const i=state.session.gauntletIdx;
+  const stage=stages[i];
+  const {c,puzzle,fb,hintbox,foot}=buildPuzzleCard(stage,`🏰 Final Trial ${i+1} / ${stages.length}`,'var(--gold)');
+  const hintBtn=el('button','btn ghost sm','💡 Hint');
+  hintBtn.onclick=()=>{state.session.hints++;hintbox.className='hintbox show';hintbox.innerHTML='💡 '+esc(puzzle.hint());Audio_.click();};
+  const checkBtn=el('button','btn gold',(i<stages.length-1?'Solve & Continue →':'Complete the Castle 🏆'));
+  checkBtn.onclick=()=>{const r=puzzle.check();
+    if(r.correct){Audio_.correct();showFeedback(fb,true,r.message);puzzle.lock();checkBtn.style.display='none';hintBtn.style.display='none';
+      if(i<stages.length-1){const n=el('button','btn cyan','Next Trial →');n.onclick=()=>{Audio_.click();state.session.gauntletIdx++;render();};foot.appendChild(n);cheer();}
+      else{Audio_.win();completeLevel(l);}
+    }else{Audio_.wrong();state.session.misses++;showFeedback(fb,false,r.message);c.classList.add('shake');setTimeout(()=>c.classList.remove('shake'),400);}
+  };
+  foot.appendChild(checkBtn);foot.appendChild(hintBtn);
+  return c;
+}
+
+function completeLevel(l){
+  const mistakes=state.session.misses+state.session.hints;
+  const stars=mistakes===0?3:mistakes<=2?2:1;
+  const prev=state.progress[l.id];
+  const bestStars=Math.max(stars,prev?prev.stars:0);
+  if(!prev||!prev.done)state.xp+=l.xp+stars*20;
+  state.progress[l.id]={done:true,stars:bestStars};
+  syncProgress();
+  setTimeout(()=>{Confetti.celebrate();state.phase='complete';render();},400);
+}
+
+function phaseComplete(l){
+  const {stars}=state.progress[l.id];
+  if(l.final){state.screen='finale';return screenFinale();}
+  const c=el('div','card glass complete');
+  c.innerHTML=`
+    <div class="badge-earned">${l.badge}</div>
+    <div class="stars-big">${[1,2,3].map(i=>`<span class="s ${i<=stars?'':'off'}">★</span>`).join('')}</div>
+    <div class="eyebrow" style="justify-content:center">Quest Complete</div>
+    <h1 style="color:${l.color}">Congratulations!</h1>
+    <p style="font-family:var(--font-display);font-weight:700;font-size:1.15rem">You have mastered <span style="color:${l.color}">${esc(l.title)}</span>.</p>
+    <div class="feat" style="margin-top:8px"><span>🏅 Badge: ${l.badgeName}</span><span>✦ +${l.xp+stars*20} XP</span></div>`;
+  const foot=el('div','footbar');foot.style.justifyContent='center';
+  const next=levelById(l.id+1);
+  const btn=el('button','btn',next?'Continue →':'Back to Map 🗺️');
+  btn.onclick=()=>{Audio_.click();if(next){openLevel(next.id);}else{state.screen='map';render();}};
+  foot.appendChild(btn);c.appendChild(foot);
+  return c;
+}
+
+/* ---- FINALE ---- */
+function screenFinale(){
+  setTimeout(()=>{Audio_.win();Confetti.fireworks();},200);
+  const c=el('div','card glass finale');
+  const earned=LEVELS.filter(l=>state.progress[l.id]&&state.progress[l.id].done);
+  c.innerHTML=`
+    <div class="trophy">🏆</div>
+    <div class="eyebrow" style="justify-content:center">The adventure is complete</div>
+    <h1 style="background:linear-gradient(135deg,var(--gold),var(--magenta),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent">YOU ARE A CODE QUEST CHAMPION!</h1>
+    <p style="font-family:var(--font-display);font-weight:700;font-size:1.2rem">${esc(state.name)}, you have mastered <span style="color:var(--gold)">Java Fundamentals</span>.</p>
+    <div class="badge-shelf">${earned.map(l=>`<div class="b"><div class="e">${l.badge}</div><div class="n">${esc(l.badgeName)}</div></div>`).join('')}</div>
+    <div class="feat" style="justify-content:center"><span>✦ ${state.xp} total XP</span><span>🏅 ${earned.length} badges</span></div>`;
+  const foot=el('div','footbar');foot.style.justifyContent='center';
+  const cert=el('button','btn gold','📜 Download Certificate (PDF)');
+  cert.onclick=()=>downloadCertificate();
+  const map=el('button','btn ghost','🗺️ Back to Map');map.onclick=()=>{Audio_.click();state.screen='map';render();};
+  foot.appendChild(cert);foot.appendChild(map);c.appendChild(foot);
+  return c;
+}
+
+/* ---- CERTIFICATE (canvas -> jsPDF) ---- */
+function downloadCertificate(){
+  Audio_.click();
+  const W=1240,H=877;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  // background
+  const grad=g.createLinearGradient(0,0,W,H);grad.addColorStop(0,'#160f3a');grad.addColorStop(.5,'#241157');grad.addColorStop(1,'#0b0a1f');
+  g.fillStyle=grad;g.fillRect(0,0,W,H);
+  // soft glows
+  const glow=(x,y,r,col)=>{const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,col);rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,W,H);};
+  glow(180,120,420,'rgba(168,85,255,.55)');glow(1080,760,460,'rgba(255,77,157,.5)');glow(1080,120,380,'rgba(56,225,255,.4)');
+  // border
+  g.strokeStyle='rgba(255,210,63,.9)';g.lineWidth=6;g.strokeRect(40,40,W-80,H-80);
+  g.strokeStyle='rgba(255,255,255,.25)';g.lineWidth=2;g.strokeRect(58,58,W-116,H-116);
+  const cx=W/2;g.textAlign='center';
+  g.fillStyle='#ffd23f';g.font='900 30px "Baloo 2",Arial';g.fillText('⚔  CODE QUEST  ⚔',cx,150);
+  g.fillStyle='#b9b2e8';g.font='700 22px Arial';g.fillText('CERTIFICATE OF COMPLETION',cx,195);
+  g.fillStyle='#f5f3ff';g.font='600 26px Arial';g.fillText('This certifies that',cx,285);
+  g.fillStyle='#ff9ecb';g.font='900 66px "Baloo 2",Arial';g.fillText(state.name,cx,360);
+  g.fillStyle='#f5f3ff';g.font='600 26px Arial';
+  g.fillText('has completed all quests and mastered the',cx,425);
+  g.fillStyle='#9bff5e';g.font='800 40px "Baloo 2",Arial';g.fillText('Fundamentals of Java Programming',cx,478);
+  g.font='60px Arial';g.fillText('🏆',cx,565);
+  g.fillStyle='#ffd23f';g.font='800 26px "Baloo 2",Arial';g.fillText('★ ★ ★  Code Quest Champion  ★ ★ ★',cx,620);
+  // footer line
+  const date=new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  g.strokeStyle='rgba(255,255,255,.3)';g.lineWidth=2;
+  g.beginPath();g.moveTo(220,720);g.lineTo(500,720);g.stroke();
+  g.beginPath();g.moveTo(740,720);g.lineTo(1020,720);g.stroke();
+  g.fillStyle='#b9b2e8';g.font='600 20px Arial';
+  g.fillText('Date',360,752);g.fillText(date,360,720-14);
+  g.fillText('Code Quest Academy',880,752);g.fillText('✦ '+state.xp+' XP earned',880,720-14);
+
+  try{
+    const jsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+    if(!jsPDF)throw new Error('no jspdf');
+    const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[W,H]});
+    pdf.addImage(cv.toDataURL('image/png'),'PNG',0,0,W,H);
+    pdf.save(`CodeQuest_Certificate_${state.name.replace(/\s+/g,'_')}.pdf`);
+    toast('📜 Certificate downloaded!');
+  }catch(err){ // fallback: open image in new tab / download PNG
+    const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download=`CodeQuest_Certificate_${state.name.replace(/\s+/g,'_')}.png`;a.click();
+    toast('📜 Certificate saved as image!');
+  }
+}
+
+/* ---- ambient encouragement ---- */
+let quoteTimer=null;
+function startQuoteTimer(){if(quoteTimer)return;quoteTimer=setInterval(()=>{if(state.name&&state.screen!=='welcome')toast(QUOTES[(Math.random()*QUOTES.length)|0],2600);},150000);} // ~2.5 min
+
+/* ============================================================
+   QUEST SELECT HUB  (shown after the student enters their name)
+   Presents BOTH challenges: Code (Java) and Web (Instagram).
+   ============================================================ */
+function screenSelect(){
+  ensureWeb();
+  const box=el('div');
+  const head=el('div','card glass center');
+  head.innerHTML=`<div class="eyebrow" style="justify-content:center">Welcome, ${esc(state.name)}! 👋</div>
+    <h1 style="background:linear-gradient(135deg,var(--magenta),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent">Choose your challenge</h1>
+    <div class="muted" style="font-size:.82rem;margin-top:4px">${esc(state.college)} · ${esc(state.program)} · ${esc(state.batch)}
+      &nbsp;·&nbsp;<a href="#" id="resetStudent" style="color:var(--magenta);font-weight:700">Not you?</a></div>`;
+  box.appendChild(head);
+  setTimeout(()=>{
+    const r=document.getElementById('resetStudent');
+    if(r) r.onclick=(e)=>{e.preventDefault();localStorage.removeItem('lu_student');state.screen='welcome';state.web=null;state.progress={};state.xp=0;state.atm=null;state._atmDoneRestored=false;render();};
+  },30);
+
+  const grid=el('div','select-grid');
+  const codeDone=Object.values(state.progress).filter(p=>p.done).length;
+  const code=el('div','quest-card glass');
+  code.setAttribute('role','button');code.tabIndex=0;
+  code.innerHTML=`<div class="glow" style="background:linear-gradient(135deg,var(--magenta),var(--violet))"></div>
+    <div class="qicon">⚔️</div><div class="eyebrow">Challenge 2 · Code</div>
+    <h2>Code Challenge</h2>
+    <div class="tags"><span>Java</span><span>Logic</span><span>Puzzles</span></div>
+    <div class="status" style="color:var(--lime)">${codeDone? '▶ '+codeDone+' / '+LEVELS.length+' quests cleared':'✨ Not started yet'}</div>`;
+  const openCode=()=>{Audio_.click();state.screen='map';render();};
+  code.onclick=openCode;code.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCode();}};
+  if(codeDone>=LEVELS.length)code.appendChild(el('div','badge-ribbon','🏆 Champion'));
+
+  const web=el('div','quest-card glass');
+  web.setAttribute('role','button');web.tabIndex=0;
+  const _L=state.web.lessons,lessonsDone=_L.html.done.filter(Boolean).length+_L.css.done.filter(Boolean).length+_L.js.done.filter(Boolean).length,wdone=state.web.done;
+  web.innerHTML=`<div class="glow" style="background:linear-gradient(135deg,var(--cyan),var(--lime))"></div>
+    <div class="qicon">🌐</div><div class="eyebrow">Challenge 1 · Web</div>
+    <h2>Web Challenge</h2>
+    <div class="tags"><span>HTML</span><span>CSS</span><span>JavaScript</span></div>
+    <div class="status" style="color:var(--cyan)">${wdone?'✅ Instagram built!':lessonsDone>0?'▶ '+lessonsDone+' / 30 lessons':'✨ Start learning'}</div>`;
+  const openWeb=()=>{Audio_.click();state.web.view='hub';state.screen='web';render();};
+  web.onclick=openWeb;web.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openWeb();}};
+  if(wdone)web.appendChild(el('div','badge-ribbon','🏆 Done'));
+
+  grid.appendChild(web);grid.appendChild(code);
+  box.appendChild(grid);
+  return box;
+}
+
+/* ============================================================
+   WEB CHALLENGE — "Build Your Instagram Profile"
+   Pure HTML/CSS/JS concepts, taught by playing:
+   Stage 1 HTML (structure) -> Stage 2 CSS (style) -> Stage 3 JS (interaction)
+   ============================================================ */
+
+// ---- sample data used by the generators (arrays we loop over) ----
+const WEB={
+  names:['Aarav Sharma','Diya Patel','Kabir Singh','Anaya Rao','Vivaan Gupta','Ishika Nair','Reyansh Iyer','Myra Joshi'],
+  unamePre:['cosmic','pixel','the.real','its','hey','sunny','urban','coffee'],
+  unameSuf:['coder','traveler','dreamer','vibes','world','creates','clicks','99'],
+  bios:['📸 Capturing moments | ☕ Coffee lover','🌍 Exploring the world, one city at a time','💻 Learning to code | 🚀 Future engineer','🎨 Designer by day, dreamer by night','🎵 Music • 🍕 Food • ✨ Good vibes','📚 Bookworm | Tea enthusiast | Always curious'],
+  professions:['Web Developer','Student','Photographer','Designer','Content Creator','Engineer'],
+  colleges:['Sunstone Campus','IIT Delhi','VIT Vellore','BITS Pilani','NIT Trichy'],
+  cities:['Mumbai','Delhi','Bengaluru','Hyderabad','Pune','Chennai'],
+  quotes:['Dream big, code bigger.','Progress over perfection.','Make it simple but significant.','Stay curious, keep building.'],
+  interests:['Coding','Travel','Music','Photography','Gaming','Reading','Fitness','Art','Coffee','Movies','Food','Design'],
+  highlights:['Travel','Food','Code','Music','Pets','Gym'],
+  tiles:['🌆','🏔️','🌊','🍕','☕','🎸','📚','🐾','🎨','🚀','🌸','🍜']
+};
+const pick=a=>a[(Math.random()*a.length)|0];
+const fmt=n=>n>=1000?(n/1000).toFixed(n%1000===0?0:1)+'k':(''+n);
+
+function ensureWeb(){
+  if(state.web)return;
+  state.web={
+    view:'hub', track:null, lvl:0,
+    lessons:{
+      html:{done:new Array(10).fill(false), code:new Array(10).fill(null)},
+      css:{done:new Array(10).fill(false), code:new Array(10).fill(null)},
+      js:{done:new Array(10).fill(false), code:new Array(10).fill(null)}
+    },
+    stage:0, built:{}, s1done:false, s2done:false, done:false,
+    css:{theme:'light',shape:'square',align:'left',btn:'square',gradient:false,shadow:false,font:'classic'},
+    profile:{name:'Your Name',username:'',bio:'✨ Tap a field on the left to tell your story!',
+      profession:'',college:'',city:'',website:'',quote:'',
+      followers:1250,following:340,posts:87,likes:0,followed:false,
+      interests:['Coding','Travel','Music'],highlights:['Travel','Food','Code'],pic:null,theme:'instagram'}
+  };
+}
+
+// "What are we learning?" banner (used at the top of every stage)
+function learnBanner(icon,text){
+  return el('div','glass card',`<div style="display:flex;gap:12px;align-items:center;padding:2px"><span style="font-size:28px">${icon}</span>
+    <div><div class="eyebrow">What are we learning?</div><div style="font-family:var(--font-display);font-weight:800;font-size:1.05rem">${text}</div></div></div>`);
+}
+
+/* ---------- SWITCH STATEMENT demo: pick colours for a theme ---------- */
+function themeVars(theme){
+  // A switch chooses one set of colours based on the theme name.
+  switch(theme){
+    case 'dark':      return {bg:'#12121a',text:'#f4f4f8',accent:'#3897f0'};
+    case 'instagram': return {bg:'#ffffff',text:'#14171a',accent:'#e1306c'};
+    case 'purple':    return {bg:'#241046',text:'#f3ecff',accent:'#a855ff'};
+    case 'blue':      return {bg:'#0e1f3a',text:'#eaf3ff',accent:'#38a1ff'};
+    case 'pink':      return {bg:'#3a0f2a',text:'#ffe9f6',accent:'#ff4d9d'};
+    case 'green':     return {bg:'#0f2a1c',text:'#e9fff2',accent:'#2ecc71'};
+    default:          return {bg:'#ffffff',text:'#14171a',accent:'#0095f6'}; // light
+  }
+}
+
+// Build the full Instagram profile card from data + style choices
+function buildIG(data,css){
+  const ig=el('div','ig'+(css.align==='center'?' center':''));
+  const t=themeVars(css.theme);
+  ig.style.setProperty('--ig-bg',t.bg);
+  ig.style.setProperty('--ig-text',t.text);
+  ig.style.setProperty('--ig-accent',t.accent);
+  ig.style.setProperty('--ig-radius',css.shape==='round'?'50%':css.shape==='rounded'?'18px':'8px');
+  ig.style.setProperty('--ig-btnradius',css.btn==='pill'?'999px':css.btn==='rounded'?'12px':'4px');
+  ig.style.setProperty('--ig-font',css.font==='modern'?"'Nunito',sans-serif":css.font==='playful'?"'Baloo 2',cursive":'Georgia,serif');
+  ig.style.setProperty('--ig-shadow',css.shadow?'0 12px 34px rgba(0,0,0,.28)':'none');
+  ig.style.setProperty('--ig-card',css.gradient?'linear-gradient(160deg,'+t.accent+'2e,transparent)':'transparent');
+
+  // DECISION MAKING: badges depend on follower count (if / else if)
+  const followers=Number(data.followers)||0;
+  let badge='';
+  if(followers>=50000) badge='<span class="ig-badge">🌟 Influencer</span>';
+  else if(followers>=10000) badge='<span class="ig-badge">⭐ Verified+</span>';
+  const verified=followers>=10000?'<span class="ig-verified" title="Verified">✔️</span>':'';
+
+  const avatar=data.pic
+    ? `<img class="ig-avatar" src="${data.pic}" alt="profile picture">`
+    : `<div class="ig-avatar">${(data.name&&data.name.trim()[0])||'📷'}</div>`;
+
+  // meta rows (only show ones that were filled in)
+  let meta='';
+  if(data.profession) meta+=`<div>💼 ${esc(data.profession)}</div>`;
+  if(data.college)    meta+=`<div>🎓 ${esc(data.college)}</div>`;
+  if(data.city)       meta+=`<div>📍 ${esc(data.city)}</div>`;
+  if(data.website)    meta+=`<div>🔗 <span style="color:var(--ig-accent);font-weight:800">${esc(data.website)}</span></div>`;
+
+  // LOOP: build story-highlight rings one by one
+  let hls='';
+  for(let i=0;i<data.highlights.length;i++){
+    hls+=`<div class="ig-hl"><div class="ring"><i>${WEB.tiles[i%WEB.tiles.length]}</i></div>${esc(data.highlights[i])}</div>`;
+  }
+  // LOOP: build interest chips
+  let chips='';
+  for(let i=0;i<data.interests.length;i++) chips+=`<span class="ig-chip">#${esc(data.interests[i])}</span>`;
+
+  // PATTERN via loop: a 3-column grid of post tiles
+  let grid='';
+  const nPosts=Math.min(9,Math.max(0,Number(data.posts)||0));
+  for(let i=0;i<nPosts;i++){
+    const g1=WEB.tiles[i%WEB.tiles.length];
+    grid+=`<div class="cell" style="background:linear-gradient(135deg,${t.accent}33,${t.accent}11)">${g1}</div>`;
+  }
+
+  const inner=el('div','ig-inner');
+  inner.innerHTML=`
+    ${avatar}
+    <div class="ig-name">${esc(data.name||'Your Name')} ${verified} ${badge}</div>
+    <div class="ig-handle">@${esc(data.username||'your.username')}</div>
+    <div class="ig-stats">
+      <div class="ig-stat"><b>${fmt(data.posts)}</b><span>posts</span></div>
+      <div class="ig-stat"><b>${fmt(followers)}</b><span>followers</span></div>
+      <div class="ig-stat"><b>${fmt(data.following)}</b><span>following</span></div>
+    </div>
+    ${meta?`<div class="ig-meta">${meta}</div>`:''}
+    <div class="ig-bio">${esc(data.bio||'')}</div>
+    ${data.quote?`<div class="ig-bio" style="font-style:italic;opacity:.85">“${esc(data.quote)}”</div>`:''}
+    <div class="ig-btns">
+      <button class="ig-btn">${data.followed?'Following ✓':'Follow'}</button>
+      <button class="ig-btn sec">Message</button>
+      <button class="ig-btn sec">❤ ${fmt(data.likes||0)}</button>
+    </div>
+    ${hls?`<div class="ig-highlights">${hls}</div>`:''}
+    ${chips?`<div class="ig-chips">${chips}</div>`:''}
+    ${grid?`<div class="ig-grid">${grid}</div>`:''}
+  `;
+  ig.appendChild(inner);
+  return ig;
+}
+
+/* ---------- Instagram capstone router (unchanged builder) ---------- */
+function screenIG(){
+  ensureWeb();
+  const s=state.web.stage;
+  if(s===0)return webIntro();
+  if(s===1)return webStage1();
+  if(s===2)return webStage2();
+  if(s===3)return webStage3();
+  return webDone();
+}
+
+function webIntro(){
+  const box=el('div');
+  const c=el('div','card glass center');
+  c.innerHTML=`<div class="eyebrow" style="justify-content:center">Web Challenge</div>
+    <div class="illus" style="font-size:70px">📸</div>
+    <h1 style="background:linear-gradient(135deg,var(--cyan),var(--lime));-webkit-background-clip:text;background-clip:text;color:transparent">Build Your Instagram Profile</h1>
+    <p class="muted" style="max-width:520px;margin:0 auto;font-weight:600">Every website is built in three layers. You'll build your profile the same way — one layer at a time.</p>
+    <div class="concept-grid" style="max-width:640px;margin:20px auto 0">
+      <div class="concept"><span class="big">🧱</span><b>Stage 1 · HTML</b><div class="muted" style="font-weight:600;font-size:.85rem">Structure — drag the pieces</div></div>
+      <div class="concept"><span class="big">🎨</span><b>Stage 2 · CSS</b><div class="muted" style="font-weight:600;font-size:.85rem">Style — click to beautify</div></div>
+      <div class="concept"><span class="big">⚡</span><b>Stage 3 · JavaScript</b><div class="muted" style="font-weight:600;font-size:.85rem">Interaction — bring it alive</div></div>
+    </div>`;
+  const btn=el('button','btn cyan','Start Stage 1 🧱');btn.style.marginTop='22px';
+  btn.onclick=()=>{Audio_.click();state.web.stage=1;render();};
+  c.appendChild(btn);box.appendChild(c);
+  return box;
+}
+
+/* ---------- STAGE 1 : HTML BUILDER (drag pieces onto the phone) ---------- */
+const S1REQ=[
+  {id:'pic',      name:'Profile Picture',tag:'<img>',   icon:'🖼️',learn:'An image element shows a picture.'},
+  {id:'username', name:'Username',        tag:'<h1>',   icon:'🔤',learn:'A heading shows the biggest, boldest text.'},
+  {id:'bio',      name:'Bio',             tag:'<p>',    icon:'📝',learn:'A paragraph holds normal sentences.'},
+  {id:'followers',name:'Followers',       tag:'<div>',  icon:'👥',learn:'A container groups a label and a number.'},
+  {id:'following',name:'Following',       tag:'<div>',  icon:'➕',learn:'Another container for the following count.'},
+  {id:'posts',    name:'Posts',           tag:'<div>',  icon:'🔲',learn:'A container for how many posts there are.'},
+  {id:'buttons',  name:'Follow Buttons',  tag:'<button>',icon:'🔘',learn:'A button is something people can click.'}
+];
+function stage1Phone(){
+  const b=state.web.built;
+  const phone=el('div','phone dropzone');
+  phone.innerHTML='<div class="notch"></div>';
+  const screen=el('div','screen');
+  const ig=el('div','ig');ig.style.setProperty('--ig-bg','#fff');ig.style.setProperty('--ig-text','#14171a');ig.style.setProperty('--ig-accent','#0095f6');
+  const inner=el('div','ig-inner');
+  let html='';
+  if(b.pic)      html+=`<div class="ig-slot"><div class="ig-avatar">📷</div></div>`;
+  if(b.username) html+=`<div class="ig-slot"><div class="ig-name">${esc(state.name)}</div><div class="ig-handle">@${esc((state.name||'you').toLowerCase().replace(/\s+/g,'.'))}</div></div>`;
+  const stats=[];
+  if(b.posts)     stats.push('<div class="ig-stat"><b>87</b><span>posts</span></div>');
+  if(b.followers) stats.push('<div class="ig-stat"><b>1.2k</b><span>followers</span></div>');
+  if(b.following) stats.push('<div class="ig-stat"><b>340</b><span>following</span></div>');
+  if(stats.length)html+=`<div class="ig-slot"><div class="ig-stats">${stats.join('')}</div></div>`;
+  if(b.bio)      html+=`<div class="ig-slot"><div class="ig-bio">💻 Learning to build websites!</div></div>`;
+  if(b.buttons)  html+=`<div class="ig-slot"><div class="ig-btns"><button class="ig-btn">Follow</button><button class="ig-btn sec">Message</button></div></div>`;
+  if(!html)html='<div style="margin:auto;text-align:center;color:#999;font-weight:700;padding:20px">📱<br>Drag pieces here<br>to build your profile</div>';
+  inner.innerHTML=html;ig.appendChild(inner);screen.appendChild(ig);phone.appendChild(screen);
+  return phone;
+}
+function webStage1(){
+  const box=el('div');
+  box.appendChild(learnBanner('🧱','HTML creates the structure — the skeleton of every webpage.'));
+  const layout=el('div','stage-layout');
+  layout.appendChild(stage1Phone());
+
+  const side=el('div','side');
+  side.appendChild(el('div','glass card',`<div class="eyebrow">Stage 1 · HTML Builder</div>
+    <div style="font-family:var(--font-display);font-weight:800;font-size:1.05rem">Drag each piece onto the phone 📱</div>
+    <div class="muted" style="font-weight:600;font-size:.85rem;margin-top:4px">Each block is a real HTML element. Build all 7 to finish the structure.</div>`));
+
+  // palette
+  const pal=el('div','palette');
+  S1REQ.forEach(item=>{
+    const chip=el('div','chip-el'+(state.web.built[item.id]?' used':''));
+    chip.innerHTML=`<div class="ce-ic">${item.icon}</div><div class="ce-name">${item.name}</div><div class="ce-tag">${esc(item.tag)}</div>`;
+    if(!state.web.built[item.id]){
+      enableDrag(chip,{onDrop(target){
+        if(target&&target.closest('.phone.dropzone')) placePiece(item);
+        else toast('Drop it on the phone screen 📱');
+      }});
+      chip.addEventListener('click',()=>{if(chip._sup)return;placePiece(item);}); // tap fallback
+    }
+    pal.appendChild(chip);
+  });
+  side.appendChild(pal);
+
+  // checklist
+  const chk=el('div','glass card');
+  chk.innerHTML='<div class="eyebrow">Checklist</div>';
+  const list=el('div','checklist');
+  S1REQ.forEach(item=>{
+    const done=!!state.web.built[item.id];
+    list.appendChild(el('div','check-item'+(done?' done':''),`<span class="box">${done?'✓':''}</span> Add ${item.name}`));
+  });
+  chk.appendChild(list);side.appendChild(chk);
+
+  // completion / continue
+  if(state.web.s1done){
+    const done=el('div','glass card center');
+    done.innerHTML=`<div style="font-size:44px">✔</div><h2 style="color:var(--ok)">Structure Complete!</h2>
+      <p class="muted" style="font-weight:600">You built a full webpage skeleton with HTML. Time to make it beautiful.</p>`;
+    const btn=el('button','btn cyan','Unlock Stage 2 · CSS 🎨');btn.onclick=()=>{Audio_.click();state.web.stage=2;render();};
+    done.appendChild(btn);side.appendChild(done);
+  }
+  layout.appendChild(side);box.appendChild(layout);
+  return box;
+}
+function placePiece(item){
+  if(state.web.built[item.id]){toast('Already added ✔');return;}
+  state.web.built[item.id]=true;
+  Audio_.pick();state.xp+=15;
+  toast(`⭐ +15 XP · ${item.tag} — ${item.learn}`,2400);
+  const allDone=S1REQ.every(x=>state.web.built[x.id]);
+  if(allDone&&!state.web.s1done){state.web.s1done=true;state.xp+=100;Audio_.win();Confetti.celebrate();}
+  else Audio_.correct();
+  render();
+}
+
+/* ---------- STAGE 2 : CSS STYLIST (click options, live preview) ---------- */
+const S2CHALLENGES=[
+  {id:'round',   label:'Round the profile picture', test:c=>c.shape==='round'},
+  {id:'center',  label:'Center the profile',        test:c=>c.align==='center'},
+  {id:'buttons', label:'Give buttons a modern look', test:c=>c.btn!=='square'},
+  {id:'gradient',label:'Apply a gradient',          test:c=>c.gradient===true},
+  {id:'shadow',  label:'Add a shadow',              test:c=>c.shadow===true}
+];
+const SAMPLE={name:'Aarav Sharma',username:'aarav.builds',bio:'💻 Learning to code | 🚀 Building cool things',
+  profession:'Web Developer',city:'Mumbai',followers:12400,following:310,posts:64,likes:892,
+  interests:['Coding','Coffee','Travel'],highlights:['Code','Food','Travel'],pic:null,quote:''};
+function stylePhone(){
+  const phone=el('div','phone');phone.innerHTML='<div class="notch"></div>';
+  const screen=el('div','screen');screen.appendChild(buildIG(SAMPLE,state.web.css));
+  phone.appendChild(screen);return phone;
+}
+function ctrlGroup(label,learn,options,current,onPick,isSwatch){
+  const g=el('div','ctrl-group');
+  g.innerHTML=`<div class="lbl">${label}</div><div class="learn">${learn}</div>`;
+  const row=el('div','opt-row');
+  options.forEach(o=>{
+    if(isSwatch){
+      const sw=el('button','swatch'+(current===o.val?' active':''));sw.style.background=o.color;sw.title=o.label;
+      sw.onclick=()=>onPick(o.val);row.appendChild(sw);
+    }else{
+      const p=el('button','opt-pill'+(current===o.val?' active':''),o.label);
+      p.onclick=()=>onPick(o.val);row.appendChild(p);
+    }
+  });
+  g.appendChild(row);return g;
+}
+function webStage2(){
+  const box=el('div');
+  box.appendChild(learnBanner('🎨','CSS adds beauty — colours, shapes, spacing and style.'));
+  const layout=el('div','stage-layout');
+  layout.appendChild(stylePhone());
+
+  const side=el('div','side');
+  side.appendChild(el('div','glass card',`<div class="eyebrow">Stage 2 · CSS Stylist</div>
+    <div style="font-family:var(--font-display);font-weight:800;font-size:1.05rem">Click options — the preview updates instantly ✨</div>
+    <div class="muted" style="font-weight:600;font-size:.85rem;margin-top:4px">No typing. Just experiment and watch it change.</div>`));
+
+  const controls=el('div','glass card');
+  const css=state.web.css;
+  const setCss=(k,v)=>{css[k]=v;Audio_.click();afterStyle();};
+  // Theme (uses a switch statement under the hood)
+  controls.appendChild(ctrlGroup('🎭 Theme','A theme sets several colours at once (uses a switch statement).',
+    [{val:'light',label:'Light'},{val:'dark',label:'Dark'},{val:'instagram',label:'Instagram'},{val:'purple',label:'Purple'},{val:'blue',label:'Blue'},{val:'pink',label:'Pink'},{val:'green',label:'Green'}],
+    css.theme,v=>setCss('theme',v)));
+  controls.appendChild(ctrlGroup('⭕ Profile Shape','border-radius rounds the corners of the picture.',
+    [{val:'square',label:'Square'},{val:'rounded',label:'Rounded'},{val:'round',label:'Circle'}],css.shape,v=>setCss('shape',v)));
+  controls.appendChild(ctrlGroup('↔ Layout','Alignment decides where things sit — left or centered.',
+    [{val:'left',label:'Left'},{val:'center',label:'Centered'}],css.align,v=>setCss('align',v)));
+  controls.appendChild(ctrlGroup('🔘 Button Style','Rounded buttons feel more modern.',
+    [{val:'square',label:'Square'},{val:'rounded',label:'Rounded'},{val:'pill',label:'Pill'}],css.btn,v=>setCss('btn',v)));
+  controls.appendChild(ctrlGroup('🌈 Background','A gradient blends two colours together.',
+    [{val:false,label:'Solid'},{val:true,label:'Gradient'}],css.gradient,v=>setCss('gradient',v)));
+  controls.appendChild(ctrlGroup('🌑 Shadow','A shadow lifts the card off the page.',
+    [{val:false,label:'None'},{val:true,label:'Shadow'}],css.shadow,v=>setCss('shadow',v)));
+  controls.appendChild(ctrlGroup('🔤 Font','Different fonts give different personalities.',
+    [{val:'classic',label:'Classic'},{val:'modern',label:'Modern'},{val:'playful',label:'Playful'}],css.font,v=>setCss('font',v)));
+  side.appendChild(controls);
+
+  // challenge checklist
+  const chk=el('div','glass card');chk.innerHTML='<div class="eyebrow">Styling goals</div>';
+  const list=el('div','checklist');
+  S2CHALLENGES.forEach(ch=>{const done=ch.test(css);
+    list.appendChild(el('div','check-item'+(done?' done':''),`<span class="box">${done?'✓':''}</span> ${ch.label}`));});
+  chk.appendChild(list);side.appendChild(chk);
+
+  if(state.web.s2done){
+    const done=el('div','glass card center');
+    done.innerHTML=`<div style="font-size:44px">✔</div><h2 style="color:var(--ok)">Beautiful!</h2>
+      <p class="muted" style="font-weight:600">You styled a webpage with CSS. Now let's make it interactive.</p>`;
+    const btn=el('button','btn cyan','Unlock Stage 3 · JavaScript ⚡');btn.onclick=()=>{Audio_.click();state.web.stage=3;render();};
+    done.appendChild(btn);side.appendChild(done);
+  }
+  layout.appendChild(side);box.appendChild(layout);
+  return box;
+}
+function afterStyle(){
+  const allDone=S2CHALLENGES.every(c=>c.test(state.web.css));
+  if(allDone&&!state.web.s2done){state.web.s2done=true;state.xp+=120;Audio_.win();Confetti.celebrate();toast('🎉 +120 XP · Styling complete!');}
+  render();
+}
+
+/* ---------- STAGE 3 : JAVASCRIPT PROJECT (inputs -> live profile) ---------- */
+function webStage3(){
+  const box=el('div');
+  box.appendChild(learnBanner('⚡','JavaScript adds interaction — the page reacts to what you do.'));
+  const layout=el('div','stage-layout');
+
+  // RIGHT: live preview (updated in place so typing never loses focus)
+  const phone=el('div','phone');phone.innerHTML='<div class="notch"></div>';
+  const screen=el('div','screen');screen.id='s3screen';phone.appendChild(screen);
+
+  // LEFT: form + buttons
+  const side=el('div','side');
+  side.appendChild(el('div','glass card',`<div class="eyebrow">Stage 3 · JavaScript</div>
+    <div style="font-family:var(--font-display);font-weight:800;font-size:1.05rem">Type on the left → watch the right change live 👉</div>`));
+
+  const p=state.web.profile;
+  const form=el('div','glass card');
+  form.innerHTML='<div class="eyebrow">Your details</div>';
+  const fg=el('div','form-grid');
+  // helper to make a text field bound to profile[key]
+  const field=(key,label,ph,area)=>{
+    const f=el('div','field');
+    f.innerHTML=`<label>${label}</label>`;
+    const input=area?el('textarea'):el('input');
+    if(area)input.rows=2;
+    input.placeholder=ph||'';input.value=p[key]||'';
+    input.addEventListener('input',()=>{p[key]=input.value;refreshS3();}); // live update = INPUT concept
+    f.appendChild(input);fg.appendChild(f);return f;
+  };
+  const row2=(a,b)=>{const r=el('div','field');const g=el('div','row2');g.appendChild(a);g.appendChild(b);r.appendChild(g);fg.appendChild(r);};
+  field('name','Name','Your full name');
+  field('username','Username','your.username');
+  field('bio','Bio','Say something about yourself…',true);
+  // profession + college side by side
+  const pf=el('div','field');pf.innerHTML='<label>Profession</label>';const pin=el('input');pin.value=p.profession;pin.placeholder='e.g. Student';pin.addEventListener('input',()=>{p.profession=pin.value;refreshS3();});pf.appendChild(pin);
+  const cf=el('div','field');cf.innerHTML='<label>College</label>';const cin=el('input');cin.value=p.college;cin.placeholder='e.g. Sunstone';cin.addEventListener('input',()=>{p.college=cin.value;refreshS3();});cf.appendChild(cin);
+  row2(pf,cf);
+  const cyf=el('div','field');cyf.innerHTML='<label>City</label>';const cyin=el('input');cyin.value=p.city;cyin.addEventListener('input',()=>{p.city=cyin.value;refreshS3();});cyf.appendChild(cyin);
+  const wf=el('div','field');wf.innerHTML='<label>Website</label>';const win=el('input');win.value=p.website;win.placeholder='mysite.com';win.addEventListener('input',()=>{p.website=win.value;refreshS3();});wf.appendChild(win);
+  row2(cyf,wf);
+  field('quote','Favourite quote','Words you live by');
+
+  // upload picture (FileReader)
+  const up=el('div','field');up.innerHTML='<label>Profile picture</label>';
+  const file=el('input');file.type='file';file.accept='image/*';
+  file.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
+    const reader=new FileReader();reader.onload=()=>{p.pic=reader.result;refreshS3();toast('🖼️ Picture added!');};reader.readAsDataURL(f);});
+  up.appendChild(file);fg.appendChild(up);
+  form.appendChild(fg);
+  form.appendChild(el('div','concept-note','💡 Concept: <b>Variables</b> store your data · <b>Input</b> updates the page live.'));
+  const alerts=el('div');alerts.id='s3alerts';
+  alerts.innerHTML='<div class="alert err" id="s3err">⚠ Username is empty — every profile needs one!</div><div class="alert warn" id="s3warn">⚠ Bio is over 150 characters — keep it short!</div>';
+  form.appendChild(alerts);
+  side.appendChild(form);
+
+  // magic buttons
+  const magic=el('div','glass card');
+  magic.innerHTML='<div class="eyebrow">Magic buttons</div><div class="muted" style="font-weight:600;font-size:.82rem;margin-bottom:8px">These run little JavaScript functions.</div>';
+  const gen=el('div','gen-row');
+  const mkBtn=(cls,label,fn)=>{const b=el('button','btn '+cls+' sm',label);b.onclick=fn;return b;};
+  gen.appendChild(mkBtn('cyan','🎲 Random Profile',()=>{ // loops + arrays
+    p.name=pick(WEB.names);p.username=pick(WEB.unamePre)+'.'+pick(WEB.unameSuf);p.bio=pick(WEB.bios);
+    p.profession=pick(WEB.professions);p.college=pick(WEB.colleges);p.city=pick(WEB.cities);p.quote=pick(WEB.quotes);
+    p.followers=500+((Math.random()*80000)|0);p.following=100+((Math.random()*900)|0);p.posts=10+((Math.random()*300)|0);
+    p.interests=[];for(let i=0;i<4;i++)p.interests.push(pick(WEB.interests)); // LOOP builds interests
+    rebuildStage3();toast('🎲 Generated a random profile!');}));
+  gen.appendChild(mkBtn('ghost','✍ Generate Bio',()=>{p.bio=pick(WEB.bios);rebuildStage3();}));
+  gen.appendChild(mkBtn('ghost','🏷 Generate Username',()=>{p.username=pick(WEB.unamePre)+'.'+pick(WEB.unameSuf)+((Math.random()*90+10)|0);rebuildStage3();}));
+  gen.appendChild(mkBtn('ghost','🔄 Reset',()=>{state.web.profile=null;ensureWebProfile();rebuildStage3();toast('🔄 Profile reset');}));
+  magic.appendChild(gen);
+
+  // operators: followers +/- , like
+  magic.appendChild(el('div','concept-note','💡 Concept: <b>Operators</b> add & subtract · <b>Decisions</b> show badges.'));
+  const ops=el('div','gen-row');
+  ops.appendChild(mkBtn('gold','➕ Followers',()=>{p.followers+=1000;refreshS3();Audio_.pick();}));   // + operator
+  ops.appendChild(mkBtn('ghost','➖ Followers',()=>{p.followers=Math.max(0,p.followers-1000);refreshS3();Audio_.pick();})); // - operator
+  ops.appendChild(mkBtn('ghost','❤ Like',()=>{p.likes+=1;refreshS3();Audio_.pick();}));               // ++ operator
+  ops.appendChild(mkBtn('ghost',p.followed?'✓ Following':'＋ Follow',()=>{p.followed=!p.followed;rebuildStage3();})); // boolean toggle
+  ops.appendChild(mkBtn('ghost','🔗 Share',()=>{toast('🔗 Profile link copied!');Audio_.pick();}));
+  magic.appendChild(ops);
+
+  // theme switch (switch statement)
+  magic.appendChild(el('div','concept-note','💡 Concept: <b>Switch</b> changes the theme.'));
+  const th=el('div','opt-row');
+  ['instagram','light','dark','blue','purple','pink','green'].forEach(t=>{
+    const btn=el('button','opt-pill'+(p.theme===t?' active':''),t[0].toUpperCase()+t.slice(1));
+    btn.onclick=()=>{p.theme=t;rebuildStage3();Audio_.click();};th.appendChild(btn);
+  });
+  magic.appendChild(th);
+  side.appendChild(magic);
+
+  // finish
+  const fin=el('div','glass card center');
+  const fbtn=el('button','btn gold','🎉 Finish My Profile');
+  fbtn.onclick=()=>{
+    if(!p.username.trim()){toast('⚠ Add a username first!');Audio_.wrong();return;}
+    state.web.done=true;state.xp+=200;Audio_.win();Confetti.fireworks();syncProgress();state.web.stage=4;render();
+  };
+  fin.appendChild(fbtn);side.appendChild(fin);
+
+  layout.appendChild(phone);layout.appendChild(side);box.appendChild(layout);
+  // initial preview + a re-render helper that rebuilds the whole stage (for button-state changes)
+  setTimeout(refreshS3,10);
+  return box;
+}
+function ensureWebProfile(){
+  if(state.web.profile)return;
+  state.web.profile={name:'Your Name',username:'',bio:'✨ Tap a field to tell your story!',profession:'',college:'',city:'',website:'',quote:'',
+    followers:1250,following:340,posts:87,likes:0,followed:false,interests:['Coding','Travel','Music'],highlights:['Travel','Food','Code'],pic:null,theme:'instagram'};
+}
+function rebuildStage3(){render();} // rebuild whole stage (updates button labels/active states)
+function refreshS3(){
+  // updates ONLY the preview + alerts, so typing keeps focus
+  const p=state.web.profile;
+  const screen=document.getElementById('s3screen');
+  if(screen){const css={theme:p.theme,shape:'round',align:'center',btn:'pill',gradient:true,shadow:true,font:'modern'};
+    screen.innerHTML='';screen.appendChild(buildIG(p,css));}
+  // DECISION MAKING: show error / warning
+  const err=document.getElementById('s3err'),warn=document.getElementById('s3warn');
+  if(err)err.classList.toggle('show',!p.username.trim());        // username empty -> error
+  if(warn)warn.classList.toggle('show',(p.bio||'').length>150);  // bio too long -> warning
+}
+
+function webDone(){
+  setTimeout(()=>{Audio_.win();Confetti.fireworks();},150);
+  const box=el('div');
+  const c=el('div','card glass complete');
+  c.innerHTML=`<div class="badge-earned">🏅</div>
+    <div class="eyebrow" style="justify-content:center">Web Challenge Complete</div>
+    <h1 style="background:linear-gradient(135deg,var(--cyan),var(--lime));-webkit-background-clip:text;background-clip:text;color:transparent">Congratulations, ${esc(state.name)}!</h1>
+    <p style="font-family:var(--font-display);font-weight:700;font-size:1.15rem">You built a real Instagram profile with <span style="color:var(--cyan)">HTML</span>, <span style="color:var(--magenta)">CSS</span> and <span style="color:var(--gold)">JavaScript</span>.</p>
+    <div class="feat" style="justify-content:center;margin-top:6px"><span>🧱 HTML structure</span><span>🎨 CSS styling</span><span>⚡ JS interaction</span><span>✦ +200 XP</span></div>`;
+  const phoneWrap=el('div');phoneWrap.style.margin='20px auto 0';phoneWrap.style.maxWidth='300px';
+  const phone=el('div','phone');phone.innerHTML='<div class="notch"></div>';const sc=el('div','screen');
+  const p=state.web.profile;sc.appendChild(buildIG(p,{theme:p.theme,shape:'round',align:'center',btn:'pill',gradient:true,shadow:true,font:'modern'}));
+  phone.appendChild(sc);phoneWrap.appendChild(phone);c.appendChild(phoneWrap);
+  const foot=el('div','footbar');foot.style.justifyContent='center';
+  const again=el('button','btn ghost','⚙ Keep Editing');again.onclick=()=>{Audio_.click();state.web.stage=3;render();};
+  const home=el('button','btn','🏠 Choose Another Challenge');home.onclick=()=>{Audio_.click();state.screen='select';render();};
+  foot.appendChild(again);foot.appendChild(home);c.appendChild(foot);
+  box.appendChild(c);
+  return box;
+}
+
+/* ============================================================
+   WEB DEVELOPER PATH  (replaces the old direct-to-Instagram flow)
+   Hub with 4 tracks: HTML / CSS / JavaScript learning levels (10 each,
+   freeCodeCamp-style: write real code, pass test cases, move on), then
+   the Instagram profile builder as the final capstone project.
+   No locking between tracks — any order. A small certificate per track.
+   The Instagram builder itself is unchanged (see screenIG()).
+   ============================================================ */
+
+const WEB_META={
+  html:{name:'HTML',icon:'📄',lang:'HTML',tagline:'Structure · 10 levels',grad:'linear-gradient(135deg,#ff7a59,#ff3d81)',certBrand:'📄 HTML · LEVEL UP',certBadge:'★ HTML Beginner ★',certEmoji:'📄'},
+  css:{name:'CSS',icon:'🎨',lang:'CSS',tagline:'Styling · 10 levels',grad:'linear-gradient(135deg,#38bdf8,#6366f1)',certBrand:'🎨 CSS · LEVEL UP',certBadge:'★ CSS Stylist ★',certEmoji:'🎨'},
+  js:{name:'JavaScript',icon:'⚡',lang:'JavaScript',tagline:'Logic · 10 levels',grad:'linear-gradient(135deg,#eab308,#f59e0b)',certBrand:'⚡ JAVASCRIPT · LEVEL UP',certBadge:'★ JavaScript Coder ★',certEmoji:'⚡'}
+};
+
+/* ---- test helpers ---- */
+function gcs(c,sel){const e=c.doc&&c.doc.querySelector(sel);return e?c.win.getComputedStyle(e):{};}
+function hasInDiv(doc,sels){const divs=[].slice.call(doc.querySelectorAll('div'));return divs.some(d=>sels.every(s=>d.querySelector(s)));}
+
+/* ---- the 30 levels ---- */
+const WEB_LEVELS={
+  html:[
+    {title:'Level 1 · Headings',concept:'<h1> shows big, bold title text.',
+     task:'Add an <code>&lt;h1&gt;</code> heading with the text <b>My Profile</b>.',
+     starter:'',
+     tests:[{name:'There is an <h1> element',fn:c=>!!c.doc.querySelector('h1')},
+            {name:'The <h1> has some text',fn:c=>{const h=c.doc.querySelector('h1');return h&&h.textContent.trim().length>0;}}]},
+    {title:'Level 2 · Paragraphs',concept:'<p> holds a line of normal text.',
+     task:'Add a <code>&lt;p&gt;</code> paragraph that describes you.',
+     starter:'<h1>My Profile</h1>\n',
+     tests:[{name:'There is a <p> element',fn:c=>!!c.doc.querySelector('p')},
+            {name:'The <p> has some text',fn:c=>{const p=c.doc.querySelector('p');return p&&p.textContent.trim().length>0;}}]},
+    {title:'Level 3 · Links',concept:'<a> makes clickable text that jumps to another page.',
+     task:'Add a link, e.g. <code>&lt;a href="https://example.com"&gt;My site&lt;/a&gt;</code>. It must have an <code>href</code>.',
+     starter:'',
+     tests:[{name:'There is an <a> element',fn:c=>!!c.doc.querySelector('a')},
+            {name:'The link has an href',fn:c=>{const a=c.doc.querySelector('a');return a&&(a.getAttribute('href')||'').length>0;}},
+            {name:'The link has text',fn:c=>{const a=c.doc.querySelector('a');return a&&a.textContent.trim().length>0;}}]},
+    {title:'Level 4 · Images',concept:'<img> puts a picture on the page.',
+     task:'Add an image with a <code>src</code> and an <code>alt</code> description. (Any src is fine, e.g. <code>photo.jpg</code>.)',
+     starter:'',
+     tests:[{name:'There is an <img> element',fn:c=>!!c.doc.querySelector('img')},
+            {name:'It has a src',fn:c=>{const i=c.doc.querySelector('img');return i&&(i.getAttribute('src')||'').length>0;}},
+            {name:'It has an alt',fn:c=>{const i=c.doc.querySelector('img');return i&&i.hasAttribute('alt');}}]},
+    {title:'Level 5 · Lists',concept:'<ul> stacks items with bullets; each item is an <li>.',
+     task:'Make a <code>&lt;ul&gt;</code> with at least <b>three</b> <code>&lt;li&gt;</code> items (your hobbies).',
+     starter:'<ul>\n\n</ul>',
+     tests:[{name:'There is a <ul>',fn:c=>!!c.doc.querySelector('ul')},
+            {name:'It has 3 or more <li> items',fn:c=>{const u=c.doc.querySelector('ul');return u&&u.querySelectorAll('li').length>=3;}}]},
+    {title:'Level 6 · Buttons',concept:'<button> is something people can click.',
+     task:'Add a <code>&lt;button&gt;</code> that says <b>Follow</b>.',
+     starter:'',
+     tests:[{name:'There is a <button>',fn:c=>!!c.doc.querySelector('button')},
+            {name:'The button has text',fn:c=>{const b=c.doc.querySelector('button');return b&&b.textContent.trim().length>0;}}]},
+    {title:'Level 7 · Containers',concept:'<div> is a box that groups elements together.',
+     task:'Create a <code>&lt;div&gt;</code> and put a heading and a paragraph <b>inside</b> it.',
+     starter:'<div>\n\n</div>',
+     tests:[{name:'There is a <div>',fn:c=>!!c.doc.querySelector('div')},
+            {name:'A heading is inside the div',fn:c=>hasInDiv(c.doc,['h1,h2,h3'])},
+            {name:'A paragraph is inside the div',fn:c=>hasInDiv(c.doc,['p'])}]},
+    {title:'Level 8 · Emphasis',concept:'<strong> makes text bold; <em> makes it italic.',
+     task:'Write a sentence using <code>&lt;strong&gt;</code> for a bold word and <code>&lt;em&gt;</code> for an italic word.',
+     starter:'<p>I <strong>love</strong> to <em>code</em>.</p>',
+     tests:[{name:'Uses <strong> with text',fn:c=>{const s=c.doc.querySelector('strong');return s&&s.textContent.trim().length>0;}},
+            {name:'Uses <em> with text',fn:c=>{const e=c.doc.querySelector('em');return e&&e.textContent.trim().length>0;}}]},
+    {title:'Level 9 · Inputs',concept:'<input> lets users type something in.',
+     task:'Add a text <code>&lt;input&gt;</code> with a <code>placeholder</code> like "Your name".',
+     starter:'',
+     tests:[{name:'There is an <input>',fn:c=>!!c.doc.querySelector('input')},
+            {name:'It has a placeholder',fn:c=>{const i=c.doc.querySelector('input');return i&&(i.getAttribute('placeholder')||'').length>0;}}]},
+    {title:'Level 10 · Mini profile card',concept:'Combine tags to build a real block of a page.',
+     task:'Build a mini profile: one <code>&lt;div&gt;</code> that contains an <code>&lt;img&gt;</code>, an <code>&lt;h2&gt;</code>, a <code>&lt;p&gt;</code> and a <code>&lt;button&gt;</code>.',
+     starter:'<div>\n\n</div>',
+     tests:[{name:'A single <div> holds everything',fn:c=>hasInDiv(c.doc,['img','h2','p','button'])},
+            {name:'Includes an image',fn:c=>!!c.doc.querySelector('div img')},
+            {name:'Includes an <h2> and a <p>',fn:c=>!!c.doc.querySelector('div h2')&&!!c.doc.querySelector('div p')},
+            {name:'Includes a button',fn:c=>!!c.doc.querySelector('div button')}]}
+  ],
+  css:[
+    {title:'Level 1 · Text colour',concept:'color sets the text colour.',
+     html:'<p class="txt">Colour me!</p>',
+     task:'Make <code>.txt</code> red. e.g. <code>.txt { color: red; }</code>',
+     starter:'.txt {\n  \n}',
+     tests:[{name:'.txt text is red',fn:c=>gcs(c,'.txt').color==='rgb(255, 0, 0)'}]},
+    {title:'Level 2 · Background',concept:'background-color fills the space behind the text.',
+     html:'<div class="box">A box</div>',
+     task:'Give <code>.box</code> any <code>background-color</code> you like.',
+     starter:'.box {\n  padding: 16px;\n  \n}',
+     tests:[{name:'.box has a background colour',fn:c=>{const b=gcs(c,'.box').backgroundColor;return b&&b!=='rgba(0, 0, 0, 0)'&&b!=='transparent';}}]},
+    {title:'Level 3 · Font size & weight',concept:'font-size sets size; font-weight sets boldness.',
+     html:'<h2 class="title">Big &amp; bold</h2>',
+     task:'Make <code>.title</code> have <code>font-size: 32px</code> and <code>font-weight: bold</code>.',
+     starter:'.title {\n  \n}',
+     tests:[{name:'font-size is 32px',fn:c=>gcs(c,'.title').fontSize==='32px'},
+            {name:'font-weight is bold',fn:c=>{const w=gcs(c,'.title').fontWeight;return w==='700'||w==='bold';}}]},
+    {title:'Level 4 · Alignment',concept:'text-align positions text left, center or right.',
+     html:'<p class="center">Center me</p>',
+     task:'Center the text of <code>.center</code> with <code>text-align: center</code>.',
+     starter:'.center {\n  \n}',
+     tests:[{name:'text is centered',fn:c=>gcs(c,'.center').textAlign==='center'}]},
+    {title:'Level 5 · Spacing',concept:'padding adds space inside a box.',
+     html:'<div class="card" style="background:#eee">Padded box</div>',
+     task:'Give <code>.card</code> <code>padding: 20px</code>.',
+     starter:'.card {\n  \n}',
+     tests:[{name:'padding is 20px',fn:c=>gcs(c,'.card').paddingTop==='20px'}]},
+    {title:'Level 6 · Borders & radius',concept:'border draws an outline; border-radius rounds corners.',
+     html:'<div class="avatar"></div>',
+     task:'Give <code>.avatar</code> a <code>border</code> and round it into a circle with <code>border-radius: 50%</code>. (It is 80×80.)',
+     starter:'.avatar {\n  width: 80px;\n  height: 80px;\n  background: #38bdf8;\n  \n}',
+     tests:[{name:'has a visible border',fn:c=>{const s=gcs(c,'.avatar');return parseFloat(s.borderTopWidth)>0&&s.borderTopStyle!=='none';}},
+            {name:'is a circle',fn:c=>{const r=gcs(c,'.avatar').borderTopLeftRadius;return r==='50%'||parseFloat(r)>=40;}}]},
+    {title:'Level 7 · Size',concept:'width and height set how big a box is.',
+     html:'<div class="sq"></div>',
+     task:'Make <code>.sq</code> exactly <code>width: 100px</code> and <code>height: 100px</code>.',
+     starter:'.sq {\n  background: #6366f1;\n  \n}',
+     tests:[{name:'width is 100px',fn:c=>gcs(c,'.sq').width==='100px'},
+            {name:'height is 100px',fn:c=>gcs(c,'.sq').height==='100px'}]},
+    {title:'Level 8 · Flexbox row',concept:'display:flex places children in a row.',
+     html:'<div class="row"><span>87</span><span>1.2k</span><span>340</span></div>',
+     task:'Make <code>.row</code> a flex row that spreads items apart: <code>display:flex</code> and <code>justify-content: space-between</code>.',
+     starter:'.row {\n  \n}',
+     tests:[{name:'display is flex',fn:c=>gcs(c,'.row').display==='flex'},
+            {name:'justify-content is space-between',fn:c=>gcs(c,'.row').justifyContent==='space-between'}]},
+    {title:'Level 9 · Grid',concept:'display:grid makes rows and columns.',
+     html:'<div class="grid"><i></i><i></i><i></i><i></i><i></i><i></i></div>',
+     task:'Make <code>.grid</code> a 3-column grid: <code>display:grid</code> and <code>grid-template-columns: repeat(3, 1fr)</code>.',
+     starter:'.grid i{background:#c7d2fe;height:40px;display:block}\n.grid {\n  \n}',
+     tests:[{name:'display is grid',fn:c=>gcs(c,'.grid').display==='grid'},
+            {name:'has 3 columns',fn:c=>{const t=gcs(c,'.grid').gridTemplateColumns||'';return t.split(' ').filter(Boolean).length===3;}}]},
+    {title:'Level 10 · Style a profile card',concept:'Combine properties into a polished card.',
+     html:'<div class="card"><h3>Anand</h3><p>Learning to code</p></div>',
+     task:'Style <code>.card</code>: add a <code>background-color</code>, <code>padding</code> of at least 12px, and <code>border-radius</code> of at least 8px.',
+     starter:'.card {\n  \n}',
+     tests:[{name:'has a background colour',fn:c=>{const b=gcs(c,'.card').backgroundColor;return b&&b!=='rgba(0, 0, 0, 0)';}},
+            {name:'padding is at least 12px',fn:c=>parseFloat(gcs(c,'.card').paddingTop||0)>=12},
+            {name:'border-radius is at least 8px',fn:c=>parseFloat(gcs(c,'.card').borderTopLeftRadius||0)>=8}]}
+  ],
+  js:[
+    {title:'Level 1 · Variables',concept:'A variable stores a value under a name.',
+     task:'Create a variable called <code>myName</code> and set it to your name (a string).',
+     starter:'let myName = "";',
+     capture:'window.__v={myName:(typeof myName!=="undefined")?myName:undefined};',
+     tests:[{name:'myName is a string',fn:c=>c.win.__v&&typeof c.win.__v.myName==='string'},
+            {name:'myName is not empty',fn:c=>c.win.__v&&c.win.__v.myName&&c.win.__v.myName.length>0}]},
+    {title:'Level 2 · Output',concept:'console.log() prints a value out.',
+     task:'Use <code>console.log</code> to print <b>Hello World</b>.',
+     starter:'',
+     tests:[{name:'logs "Hello World"',fn:c=>c.logs.some(l=>/hello\s*world/i.test(l))}]},
+    {title:'Level 3 · Strings',concept:'Template literals build text with backticks and ${ }.',
+     task:'Make a variable <code>greeting</code> that says <code>Hi, I am &lt;your name&gt;</code>, then <code>console.log(greeting)</code>.',
+     starter:'let myName = "Anand";\nlet greeting = ``;\nconsole.log(greeting);',
+     capture:'window.__v={greeting:(typeof greeting!=="undefined")?greeting:undefined};',
+     tests:[{name:'greeting contains "Hi"',fn:c=>c.win.__v&&/hi/i.test(String(c.win.__v.greeting||''))},
+            {name:'greeting is printed',fn:c=>c.logs.some(l=>/hi/i.test(l))}]},
+    {title:'Level 4 · Numbers',concept:'You can do maths with + − * /.',
+     task:'Create a variable <code>sum</code> equal to <code>5 + 3</code>.',
+     starter:'let sum = ;',
+     capture:'window.__v={sum:(typeof sum!=="undefined")?sum:undefined};',
+     tests:[{name:'sum equals 8',fn:c=>c.win.__v&&c.win.__v.sum===8}]},
+    {title:'Level 5 · Decisions',concept:'if / else runs code based on a condition.',
+     task:'Given <code>age = 20</code>, set <code>canVote</code> to <code>"yes"</code> if age is 18 or more, otherwise <code>"no"</code>.',
+     starter:'let age = 20;\nlet canVote;\n// write your if / else here\n',
+     capture:'window.__v={canVote:(typeof canVote!=="undefined")?canVote:undefined};',
+     tests:[{name:'canVote is "yes"',fn:c=>c.win.__v&&c.win.__v.canVote==='yes'}]},
+    {title:'Level 6 · Functions',concept:'A function is reusable code that can return a value.',
+     task:'Write a function <code>double(n)</code> that <b>returns</b> <code>n * 2</code>.',
+     starter:'function double(n){\n  \n}',
+     capture:'window.__v={isFn:(typeof double==="function"),dbl:(typeof double==="function")?double(5):undefined};',
+     tests:[{name:'double is a function',fn:c=>c.win.__v&&c.win.__v.isFn},
+            {name:'double(5) returns 10',fn:c=>c.win.__v&&c.win.__v.dbl===10}]},
+    {title:'Level 7 · Arrays',concept:'An array is an ordered list of values.',
+     task:'Create an array <code>hobbies</code> with exactly <b>three</b> items.',
+     starter:'let hobbies = [];',
+     capture:'window.__v={hobbies:(typeof hobbies!=="undefined")?hobbies:undefined};',
+     tests:[{name:'hobbies is an array',fn:c=>c.win.__v&&Array.isArray(c.win.__v.hobbies)},
+            {name:'it has 3 items',fn:c=>c.win.__v&&Array.isArray(c.win.__v.hobbies)&&c.win.__v.hobbies.length===3}]},
+    {title:'Level 8 · Loops',concept:'A loop repeats code many times.',
+     task:'Use a <code>for</code> loop to add the numbers 1 to 5 into <code>total</code> (it should end as 15).',
+     starter:'let total = 0;\nfor (let i = 1; i <= 5; i++){\n  \n}',
+     capture:'window.__v={total:(typeof total!=="undefined")?total:undefined};',
+     tests:[{name:'total equals 15',fn:c=>c.win.__v&&c.win.__v.total===15}]},
+    {title:'Level 9 · Changing the page',concept:'JavaScript can change HTML through the DOM.',
+     html:'<h1 id="title">Old title</h1>',
+     task:'Change the <code>#title</code> text to <b>Changed!</b> using <code>document.getElementById</code>.',
+     starter:'document.getElementById("title").textContent = "";',
+     tests:[{name:'#title now says "Changed!"',fn:c=>{const t=c.doc.getElementById('title');return t&&t.textContent.trim()==='Changed!';}}]},
+    {title:'Level 10 · Button click',concept:'Events run code when the user interacts.',
+     html:'<button id="btn">Follow</button> <span id="out"></span>',
+     task:'When <code>#btn</code> is clicked, set <code>#out</code>\'s text to <b>Following</b>. Use <code>addEventListener("click", ...)</code>.',
+     starter:'const btn = document.getElementById("btn");\nconst out = document.getElementById("out");\n',
+     tests:[{name:'clicking the button shows "Following"',fn:c=>{const b=c.doc.getElementById('btn'),o=c.doc.getElementById('out');if(!b||!o)return false;b.click();return o.textContent.trim().toLowerCase()==='following';}}]}
+  ]
+};
+
+/* ---- sandbox document for preview + tests ---- */
+function webBaseCSS(){return "body{font-family:'Nunito',system-ui,sans-serif;margin:14px;color:#14171a;background:#fff;line-height:1.5}*{box-sizing:border-box}img{max-width:120px;border-radius:8px}";}
+function webSrcdoc(track,code,lvl){
+  const base='<style>'+webBaseCSS()+'</style>';
+  if(track==='html') return '<!doctype html><html><head>'+base+'</head><body>'+(code||'')+'</body></html>';
+  if(track==='css')  return '<!doctype html><html><head>'+base+'<style>'+(code||'')+'</style></head><body>'+(lvl.html||'')+'</body></html>';
+  return '<!doctype html><html><head>'+base+'</head><body>'+(lvl.html||'')+
+    '<scr'+'ipt>window.__logs=[];window.__error=null;window.onerror=function(m){window.__error=m;return true;};console.log=function(){try{window.__logs.push(Array.prototype.map.call(arguments,String).join(" "));}catch(e){}};</scr'+'ipt>'+
+    '<scr'+'ipt>'+(code||'')+'</scr'+'ipt>'+
+    '<scr'+'ipt>try{'+(lvl.capture||'')+'}catch(e){}</scr'+'ipt>'+
+    '</body></html>';
+}
+
+/* ---- WEB router ---- */
+function screenWeb(){
+  ensureWeb();
+  const v=state.web.view;
+  if(v==='ig')return screenIG();
+  if(v==='level')return webLevelScreen();
+  if(v==='sectiondone')return webSectionDone();
+  return webHub();
+}
+
+/* ---- the path hub ---- */
+function webHub(){
+  const box=el('div');
+  const head=el('div','card glass center');
+  head.innerHTML='<div class="eyebrow" style="justify-content:center">Web Developer Path</div>'
+    +'<h1 style="background:linear-gradient(135deg,var(--cyan),var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent">Learn to build the web</h1>'
+    +'<p class="muted" style="max-width:560px;margin:6px auto 0;font-weight:600">Work through HTML, CSS and JavaScript — writing real code and passing tests. Do them in any order, then build your Instagram profile as the final project.</p>';
+  box.appendChild(head);
+  const grid=el('div','path-grid');
+  ['html','css','js'].forEach(tk=>{
+    const m=WEB_META[tk],L=state.web.lessons[tk],total=WEB_LEVELS[tk].length,done=L.done.filter(Boolean).length,complete=done===total;
+    const card=el('div','path-card glass');card.setAttribute('role','button');card.tabIndex=0;
+    card.innerHTML='<div class="glow" style="background:'+m.grad+'"></div>'
+      +'<div class="qicon">'+m.icon+'</div><div class="eyebrow">'+m.tagline+'</div>'
+      +'<h2>'+m.name+'</h2>'
+      +'<div class="path-prog"><div class="progress-web"><i style="width:'+Math.round(done/total*100)+'%"></i></div><span>'+done+' / '+total+'</span></div>'
+      +'<div class="status" style="color:var(--cyan)">'+(complete?'✅ Complete':(done>0?'▶ Continue':'✨ Start'))+'</div>';
+    const open=()=>{Audio_.click();state.web.track=tk;const n=L.done.findIndex(d=>!d);state.web.lvl=n<0?0:n;state.web.view='level';render();};
+    card.onclick=open;card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}};
+    if(complete)card.appendChild(el('div','badge-ribbon','🏆 '+m.name));
+    grid.appendChild(card);
+  });
+  const ig=el('div','path-card glass final');ig.setAttribute('role','button');ig.tabIndex=0;
+  ig.innerHTML='<div class="glow" style="background:linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7)"></div>'
+    +'<div class="qicon">📸</div><div class="eyebrow">Final Project</div>'
+    +'<h2>Build your Instagram Profile</h2>'
+    +'<p class="muted" style="font-weight:600">Put HTML, CSS &amp; JS together to build a real profile page.</p>'
+    +'<div class="status" style="color:var(--magenta)">'+(state.web.done?'✅ Completed!':'🎓 Capstone project')+'</div>';
+  const openIg=()=>{Audio_.click();state.web.view='ig';render();};
+  ig.onclick=openIg;ig.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openIg();}};
+  grid.appendChild(ig);
+  box.appendChild(grid);
+  return box;
+}
+
+/* ---- a single coding level (write code -> run -> pass tests) ---- */
+function webLevelScreen(){
+  const track=state.web.track,idx=state.web.lvl,list=WEB_LEVELS[track],lvl=list[idx],m=WEB_META[track];
+  const box=el('div');
+  const head=el('div','glass card lvl-head');
+  const doneCount=state.web.lessons[track].done.filter(Boolean).length;
+  head.innerHTML='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+    +'<button class="btn ghost sm" id="webBack">← Path</button>'
+    +'<span class="tk-badge" style="background:'+m.grad+'">'+m.icon+' '+m.name+'</span>'
+    +'<b>Level '+(idx+1)+' / '+list.length+'</b>'
+    +'<div class="progress-web" style="flex:1;min-width:120px"><i style="width:'+Math.round(doneCount/list.length*100)+'%"></i></div>'
+    +'</div>';
+  box.appendChild(head);
+
+  const layout=el('div','lvl-layout');
+  const left=el('div','lvl-left');
+  const inst=el('div','glass card');
+  inst.innerHTML='<div class="eyebrow">'+esc(lvl.title)+'</div>'
+    +'<div class="concept">💡 '+esc(lvl.concept)+'</div>'
+    +'<div class="task">'+lvl.task+'</div>';
+  left.appendChild(inst);
+  const edCard=el('div','glass card');
+  edCard.innerHTML='<div class="eyebrow">'+m.lang+' editor</div>';
+  const ed=el('textarea','web-editor code');ed.id='webEd';ed.spellcheck=false;
+  ed.setAttribute('autocapitalize','off');ed.setAttribute('autocorrect','off');ed.setAttribute('autocomplete','off');
+  ed.value=(state.web.lessons[track].code[idx]!=null?state.web.lessons[track].code[idx]:(lvl.starter||''));
+  edCard.appendChild(ed);
+  const btns=el('div','lvl-btns');
+  const runBtn=el('button','btn cyan sm','▶ Run');
+  const checkBtn=el('button','btn gold sm','✓ Check');
+  const resetBtn=el('button','btn ghost sm','↺ Reset');
+  btns.appendChild(runBtn);btns.appendChild(checkBtn);btns.appendChild(resetBtn);
+  edCard.appendChild(btns);
+  left.appendChild(edCard);
+  layout.appendChild(left);
+
+  const right=el('div','lvl-right');
+  const prevCard=el('div','glass card');
+  prevCard.innerHTML='<div class="eyebrow">Live preview</div>';
+  const frame=el('iframe','web-frame');frame.id='webFrame';frame.setAttribute('title','preview');
+  prevCard.appendChild(frame);
+  if(track==='js'){const con=el('div','web-console');con.id='webCon';con.innerHTML='<span class="muted">Console output appears here…</span>';prevCard.appendChild(con);}
+  right.appendChild(prevCard);
+  const testCard=el('div','glass card');
+  testCard.innerHTML='<div class="eyebrow">Tests to pass</div>';
+  const tlist=el('div','test-list');tlist.id='webTests';
+  lvl.tests.forEach(t=>tlist.appendChild(el('div','test-item','<span class="tbox">•</span> '+esc(t.name))));
+  testCard.appendChild(tlist);
+  const nextWrap=el('div');nextWrap.id='webNextWrap';nextWrap.style.marginTop='12px';
+  testCard.appendChild(nextWrap);
+  right.appendChild(testCard);
+  layout.appendChild(right);
+  box.appendChild(layout);
+
+  const doPreview=(check)=>{frame._check=check;frame.srcdoc=webSrcdoc(track,ed.value,lvl)+'<!--'+Date.now()+'-->';};
+  frame.onload=()=>{
+    try{
+      const win=frame.contentWindow;
+      if(track==='js'){const con=document.getElementById('webCon');if(con){const logs=(win.__logs||[]);let html=logs.length?logs.map(l=>'<div>'+esc(l)+'</div>').join(''):'<span class="muted">No output.</span>';if(win.__error)html+='<div class="err">⚠ '+esc(win.__error)+'</div>';con.innerHTML=html;}}
+    }catch(e){}
+    if(frame._check){frame._check=false;webRunTests(track,idx,ed.value,frame);}
+  };
+  runBtn.onclick=()=>{Audio_.click();clearTimeout(tmr);doPreview(false);};
+  checkBtn.onclick=()=>{Audio_.click();clearTimeout(tmr);doPreview(true);};
+  resetBtn.onclick=()=>{ed.value=lvl.starter||'';state.web.lessons[track].code[idx]=ed.value;document.getElementById('webNextWrap').innerHTML='';[].forEach.call(document.querySelectorAll('#webTests .test-item'),it=>{it.className='test-item';it.querySelector('.tbox').textContent='•';});doPreview(false);};
+  let tmr;ed.addEventListener('input',()=>{state.web.lessons[track].code[idx]=ed.value;clearTimeout(tmr);tmr=setTimeout(()=>doPreview(false),300);});
+  ed.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const s=ed.selectionStart,en=ed.selectionEnd;ed.value=ed.value.slice(0,s)+'  '+ed.value.slice(en);ed.selectionStart=ed.selectionEnd=s+2;}});
+  head.querySelector('#webBack').onclick=()=>{Audio_.click();state.web.view='hub';render();};
+  setTimeout(()=>doPreview(false),20);
+  if(state.web.lessons[track].done[idx])setTimeout(()=>webShowNext(track,idx),50);
+  return box;
+}
+
+function webRunTests(track,idx,code,frame){
+  const lvl=WEB_LEVELS[track][idx];let win,doc;
+  try{win=frame.contentWindow;doc=frame.contentDocument||win.document;}catch(e){}
+  const ctx={code:code,win:win,doc:doc,logs:(win&&win.__logs)||[]};
+  const tlist=document.getElementById('webTests');let all=true;
+  lvl.tests.forEach((t,i)=>{
+    let ok=false;try{ok=!!t.fn(ctx);}catch(e){ok=false;}
+    if(!ok)all=false;
+    const item=tlist.children[i];if(item){item.className='test-item '+(ok?'pass':'fail');const bx=item.querySelector('.tbox');if(bx)bx.textContent=ok?'✓':'✗';}
+  });
+  if(all)webPassLevel(track,idx);
+  else{Audio_.wrong();toast('Not quite — some tests are still failing.');}
+}
+
+function webPassLevel(track,idx){
+  const first=!state.web.lessons[track].done[idx];
+  state.web.lessons[track].done[idx]=true;
+  if(first)state.xp+=25;
+  Audio_.win();Confetti.celebrate();
+  toast(first?'Level complete! ✓ +25 XP':'Passed again ✓');
+  syncProgress();
+  webShowNext(track,idx);
+}
+
+function webShowNext(track,idx){
+  const wrap=document.getElementById('webNextWrap');if(!wrap)return;wrap.innerHTML='';
+  const list=WEB_LEVELS[track];
+  wrap.appendChild(el('div','pass-banner','✅ Passed! Great work.'));
+  if(idx<list.length-1){
+    const b=el('button','btn cyan','Next level ▶');b.onclick=()=>{Audio_.click();state.web.lvl=idx+1;render();};wrap.appendChild(b);
+  }else{
+    const allDone=state.web.lessons[track].done.every(Boolean);
+    const b=el('button','btn gold',allDone?('🎉 Finish '+WEB_META[track].name+' → Certificate'):'Review earlier levels');
+    b.onclick=()=>{Audio_.click();if(allDone){state.web.view='sectiondone';}else{state.web.lvl=0;}render();};
+    wrap.appendChild(b);
+  }
+}
+
+/* ---- section-complete + certificate ---- */
+function webSectionDone(){
+  const track=state.web.track,m=WEB_META[track];
+  setTimeout(()=>{Audio_.win();Confetti.fireworks();},120);
+  const box=el('div');
+  const c=el('div','card glass complete center');
+  c.innerHTML='<div class="badge-earned">'+m.certEmoji+'</div>'
+    +'<div class="eyebrow" style="justify-content:center">'+m.name+' track complete</div>'
+    +'<h1 style="background:'+m.grad+';-webkit-background-clip:text;background-clip:text;color:transparent">Great job, '+esc(state.name)+'!</h1>'
+    +'<p style="font-family:var(--font-display);font-weight:700;font-size:1.12rem">You finished all '+WEB_LEVELS[track].length+' '+m.name+' levels by writing real code and passing every test.</p>'
+    +'<div class="feat" style="justify-content:center;margin-top:6px"><span>'+m.icon+' '+m.name+'</span><span>✅ 10 / 10 levels</span><span>✦ +'+(WEB_LEVELS[track].length*25)+' XP</span></div>';
+  const foot=el('div','footbar');foot.style.justifyContent='center';
+  const cert=el('button','btn gold','📜 Download '+m.name+' Certificate');cert.onclick=()=>webCert(track);
+  const hub=el('button','btn','← Back to Path');hub.onclick=()=>{Audio_.click();state.web.view='hub';render();};
+  foot.appendChild(cert);foot.appendChild(hub);c.appendChild(foot);
+  box.appendChild(c);return box;
+}
+function webCert(track){const m=WEB_META[track];Audio_.click();drawCertificate({brand:m.certBrand,line1:'has successfully completed the '+m.name+' track',line2:WEB_LEVELS[track].length+' hands-on coding levels · Level Up',badge:m.certBadge,emoji:m.certEmoji,file:m.name+'_Certificate'});}
+
+/* ============================================================
+   ATM CAPSTONE PROJECT  (Code block · after Level 9)
+   The "everything you learned had a purpose" finale: students build
+   a real, working ATM one stage at a time, revising every concept.
+   ============================================================ */
+const ATM_STAGES=[
+  {title:'Welcome Screen',   concept:'Hello World · Output',       icon:'👋'},
+  {title:'Account Details',  concept:'Variables · Data Types',     icon:'📦'},
+  {title:'Login',            concept:'Input · Decision Making',    icon:'🔐'},
+  {title:'Main Menu',        concept:'Switch Statement',           icon:'📋'},
+  {title:'Balance Enquiry',  concept:'Variables · Output',         icon:'💰'},
+  {title:'Deposit Money',    concept:'Operators · Input',          icon:'➕'},
+  {title:'Withdraw Money',   concept:'Operators · Decision',       icon:'➖'},
+  {title:'Fast Cash',        concept:'Switch Statement',           icon:'⚡'},
+  {title:'Mini Statement',   concept:'Loops',                      icon:'🧾'},
+  {title:'ATM Decorator',    concept:'Nested Loops · Patterns',    icon:'🎨'}
+];
+const rupees=n=>'₹'+(Number(n)||0).toLocaleString('en-IN');
+
+function ensureATM(){
+  if(state.atm)return;
+  state.atm={
+    stage:0, progress:0, done:false, awarded:{},
+    bank:'Code Bank', customer:state.name||'', account:''+Math.floor(1e11+Math.random()*8e11),
+    pin:'1234', balance:5000, loggedIn:false, entry:'',
+    transactions:[], menuWired:{}, deco:{color:'#38e1ff',colorChosen:false,pattern:false},
+    view:'welcome', used:{}
+  };
+}
+// count a stage as done + award XP once
+function markStage(n){ if(state.atm.progress<n)state.atm.progress=n; if(!state.atm.awarded[n]){state.atm.awarded[n]=true;state.xp+=40;} }
+function pushTxn(type,amount){state.atm.transactions.push({type,amount});if(state.atm.transactions.length>20)state.atm.transactions.shift();}
+
+// falling money/coins animation (pure CSS + a few DOM elements)
+function moneyAnim(emoji,count){emoji=emoji||'💵';count=count||14;
+  for(let i=0;i<count;i++){const c=el('div','coin',emoji);c.style.left=(Math.random()*96)+'vw';
+    const dur=1.2+Math.random()*1.3;c.style.animation=`coinfall ${dur}s linear forwards`;c.style.animationDelay=(Math.random()*.5)+'s';
+    document.body.appendChild(c);setTimeout(()=>c.remove(),(dur+0.7)*1000);}
+}
+
+// The ATM machine chassis (brand + screen + card slot)
+function atmFrame(body,opts){
+  opts=opts||{};
+  const wrap=el('div','atm-wrap');
+  const atm=el('div','atm');
+  const brand=el('div','atm-brand',`<span class="chip"></span> ${esc(state.atm.bank)} 🏧`);
+  if(state.atm.deco&&state.atm.deco.colorChosen){atm.style.borderColor=state.atm.deco.color;brand.style.color=state.atm.deco.color;}
+  atm.appendChild(brand);
+  const screen=el('div','atm-screen');
+  if(typeof body==='string')screen.innerHTML=body; else screen.appendChild(body);
+  atm.appendChild(screen);
+  atm.appendChild(el('div','atm-slot'+(opts.blink?' blink':'')));
+  atm.appendChild(el('div','atm-slot-label',opts.slotLabel||'💳 CARD & RECEIPT SLOT'));
+  wrap.appendChild(atm);
+  return wrap;
+}
+// numeric keypad that manages the PIN entry
+function atmKeypad(onEnter){
+  const box=el('div');
+  const dots=el('div','pin-dots');
+  const upd=()=>{dots.innerHTML=state.atm.entry.length?'•'.repeat(state.atm.entry.length):'<span style="opacity:.4;font-size:.9rem;letter-spacing:0">enter PIN</span>';};
+  upd();box.appendChild(dots);
+  const pad=el('div','keypad');
+  ['1','2','3','4','5','6','7','8','9','C','0','↵'].forEach(k=>{
+    const key=el('button','key',k);
+    key.onclick=()=>{Audio_.pick();
+      if(k==='C'){state.atm.entry='';upd();return;}
+      if(k==='↵'){onEnter(state.atm.entry);return;}
+      if(state.atm.entry.length<6){state.atm.entry+=k;upd();}
+    };
+    pad.appendChild(key);
+  });
+  box.appendChild(pad);return box;
+}
+// stage progress dots + header
+function atmDots(cur){const d=el('div','stage-dots');
+  for(let i=1;i<=10;i++)d.appendChild(el('div','sd'+(i<=state.atm.progress?' on':'')+(i===cur?' cur':'')));return d;}
+function atmHeader(n){const m=ATM_STAGES[n-1];
+  return el('div','glass card',`<div class="eyebrow">Stage ${n} / 10 · Uses: ${m.concept}</div>
+    <div style="font-family:var(--font-display);font-weight:800;font-size:1.15rem">${m.icon} ${m.title}</div>`);}
+// Continue button (only after the stage's task is complete)
+function atmCont(n){
+  if(state.atm.progress<n)return null;
+  const last=n===10;
+  const b=el('button','btn cyan',last?'🏆 Enter Final Test':'Continue to Stage '+(n+1)+' →');
+  b.onclick=()=>{Audio_.click();state.atm.entry='';
+    if(last){initFinal();state.atm.stage=11;}else{state.atm.stage=n+1;}
+    render();};
+  const f=el('div','footbar');f.style.justifyContent='center';f.appendChild(b);return f;
+}
+function stageBox(n,body,extra){
+  const m=ATM_STAGES[n-1];const box=el('div');
+  box.appendChild(learnBanner('🏧','This stage uses '+m.concept+'.'));
+  box.appendChild(atmDots(n));
+  box.appendChild(atmHeader(n));
+  box.appendChild(atmFrame(body,{blink:n===1&&state.atm.progress<1}));
+  if(extra)box.appendChild(extra);
+  const c=atmCont(n);if(c)box.appendChild(c);
+  return box;
+}
+
+/* ---- ATM router ---- */
+function screenATM(){
+  ensureATM();
+  const s=state.atm.stage;
+  if(s===0)return atmIntro();
+  if(s>=1&&s<=10)return atmStage(s);
+  if(s===11)return atmFinalTest();
+  return atmDone();
+}
+
+function atmIntro(){
+  const box=el('div');
+  const c=el('div','card glass center');
+  c.innerHTML=`<div class="eyebrow" style="justify-content:center">Capstone Project</div>
+    <div class="illus" style="font-size:70px">🏧</div>
+    <h1 style="background:linear-gradient(135deg,#38e1ff,#ffd23f);-webkit-background-clip:text;background-clip:text;color:transparent">Build a Real ATM</h1>
+    <p class="muted" style="max-width:540px;margin:0 auto;font-weight:600">You've learned 9 concepts. Now you'll use <b>all of them together</b> to build a working ATM machine — one stage at a time.</p>
+    <div class="feat" style="justify-content:center;margin-top:14px">
+      <span>👋 Hello World</span><span>📦 Variables</span><span>🔤 Data Types</span><span>⌨️ Input</span><span>➗ Operators</span><span>🚦 Decisions</span><span>🔀 Switch</span><span>🔁 Loops</span><span>✨ Patterns</span></div>`;
+  const btn=el('button','btn gold','Start Building 🏧');btn.style.marginTop='20px';
+  btn.onclick=()=>{Audio_.click();state.atm.stage=1;render();};
+  c.appendChild(btn);box.appendChild(c);return box;
+}
+
+function atmStage(n){
+  const a=state.atm;
+
+  /* ---------- STAGE 1 · WELCOME (Output / Hello World) ---------- */
+  if(n===1){
+    const body=el('div');
+    body.innerHTML=`<h3>${esc(a.bank)}</h3><div class="sub">Welcome! This screen just <b>displays text</b> — that's <b>output</b>, exactly like your first Hello World program.</div>`;
+    if(a.progress>=1){
+      body.innerHTML+=`<div class="sub" style="color:#7dffb0;font-weight:800;margin-top:10px">✅ Great! You created your first ATM screen.</div>`;
+      const cont=el('button','abtn ghost','Continue Button ▸');cont.disabled=true;body.appendChild(cont);
+    }else{
+      const ins=el('button','abtn gold','Insert Card 💳');
+      ins.onclick=()=>{moneyAnim('💳',5);markStage(1);Audio_.correct();toast('✅ First ATM screen created!');render();};
+      body.appendChild(ins);
+    }
+    return stageBox(1,body);
+  }
+
+  /* ---------- STAGE 2 · ACCOUNT DETAILS (Variables · Data Types) ---------- */
+  if(n===2){
+    const body=el('div');
+    body.innerHTML=`<h3>Set up the account</h3><div class="sub">Type the details. Each one is stored in a <b>variable</b> with a <b>data type</b>.</div>`;
+    const mkF=(label,val,numeric,onIn,maxlen)=>{const f=el('div','field atm-field');f.innerHTML=`<label style="color:#a9d6ea">${label}</label>`;
+      const i=el('input');i.value=val;if(numeric)i.inputMode='numeric';if(maxlen)i.maxLength=maxlen;
+      i.addEventListener('input',()=>onIn(i.value));f.appendChild(i);return f;};
+    body.appendChild(mkF('Customer Name',a.customer,false,v=>a.customer=v));
+    body.appendChild(mkF('Account Number',a.account,true,v=>a.account=v));
+    body.appendChild(mkF('PIN (4 digits)',a.pin,true,v=>a.pin=v.slice(0,4),4));
+    body.appendChild(mkF('Opening Balance (₹)',a.balance,true,v=>a.balance=Number(v)||0));
+    const vb=el('div');vb.style.marginTop='4px';
+    vb.innerHTML=`<div class="var-box">customerName <span class="type text">Text</span></div>
+      <div class="var-box">accountNumber <span class="type num">Number</span></div>
+      <div class="var-box">pin <span class="type num">Number</span></div>
+      <div class="var-box">balance <span class="type num">Number</span></div>`;
+    body.appendChild(vb);
+    const save=el('button','abtn gold','Save Account 💾');
+    save.onclick=()=>{if(!a.customer.trim()||String(a.pin).length!==4){toast('Add a name and a 4-digit PIN');Audio_.wrong();return;}
+      markStage(2);Audio_.correct();toast('✅ Saved into variables!');render();};
+    body.appendChild(save);
+    if(a.progress>=2)body.appendChild(el('div','sub',`✅ Stored: ${esc(a.customer)} · ${rupees(a.balance)}`));
+    return stageBox(2,body);
+  }
+
+  /* ---------- STAGE 3 · LOGIN (Input · Decision) ---------- */
+  if(n===3){
+    const body=el('div');
+    if(a.progress>=3){
+      body.innerHTML=`<h3>Logged in ✅</h3><div class="sub" style="color:#7dffb0;font-weight:800">Welcome, ${esc(a.customer)}! The PIN was correct.</div>`;
+    }else{
+      body.innerHTML=`<h3>Enter your PIN</h3>
+        <div class="code" style="background:rgba(0,0,0,.25);border-color:rgba(120,220,255,.2);color:#cfe">${hi('if (entered == PIN)\n   openATM();\nelse\n   tryAgain();')}</div>
+        <div class="sub">Hint: your PIN is <b>${esc(String(a.pin))}</b></div>`;
+      body.appendChild(atmKeypad(v=>{
+        // DECISION: compare what was typed with the saved PIN
+        if(v===String(a.pin)){a.loggedIn=true;markStage(3);Audio_.correct();toast('✅ Login successful!');render();}
+        else{Audio_.wrong();toast('❌ Incorrect PIN. Try again.');a.entry='';render();}
+      }));
+      const reset=el('button','abtn ghost','Reset');reset.onclick=()=>{a.entry='';render();};
+      body.appendChild(reset);
+    }
+    return stageBox(3,body);
+  }
+
+  /* ---------- STAGE 4 · MAIN MENU (Switch) ---------- */
+  if(n===4){
+    const body=el('div');
+    const opts=[['balance','💰','Balance'],['deposit','➕','Deposit'],['withdraw','➖','Withdraw'],['statement','🧾','Mini Statement'],['fastcash','⚡','Fast Cash'],['exit','🚪','Exit']];
+    const wiredCount=opts.filter(o=>a.menuWired[o[0]]).length;
+    // show the switch being built, one case at a time
+    let cases='';opts.forEach((o,i)=>{if(a.menuWired[o[0]])cases+=`\n   case ${i+1}: ${o[2]}();`;});
+    body.innerHTML=`<h3>Wire up the menu</h3><div class="sub">Tap each option to add it as one <b>switch case</b>.</div>
+      <div class="code" style="background:rgba(0,0,0,.25);border-color:rgba(120,220,255,.2);color:#cfe">${hi('switch (choice) {'+cases+'\n}')}</div>`;
+    const grid=el('div','menu-grid');
+    opts.forEach((o,i)=>{const mi=el('div','menu-item'+(a.menuWired[o[0]]?' wired':''),`<span class="mi">${o[1]}</span>${o[2]}`);
+      mi.onclick=()=>{a.menuWired[o[0]]=!a.menuWired[o[0]];Audio_.pick();
+        if(opts.every(x=>a.menuWired[x[0]])&&a.progress<4){markStage(4);Audio_.correct();Confetti.celebrate();toast('✅ Menu wired with 6 switch cases!');}
+        render();};
+      grid.appendChild(mi);});
+    body.appendChild(grid);
+    if(a.progress<4)body.appendChild(el('div','sub',`${wiredCount} / 6 options wired`));
+    return stageBox(4,body);
+  }
+
+  /* ---------- STAGE 5 · BALANCE ENQUIRY (Variables · Output) ---------- */
+  if(n===5){
+    const body=el('div');
+    body.innerHTML=`<h3>Balance Enquiry</h3><div class="sub">The screen reads the <b>balance</b> variable and shows it (output).</div>`;
+    const card=el('div','bal-card',`<div class="lbl">AVAILABLE BALANCE</div><div class="amt">${rupees(a.balance)}</div>`);
+    body.appendChild(card);
+    const rf=el('button','abtn','🔄 Refresh Balance');
+    rf.onclick=()=>{markStage(5);Audio_.correct();toast('Balance refreshed ✅');render();};
+    body.appendChild(rf);
+    return stageBox(5,body);
+  }
+
+  /* ---------- STAGE 6 · DEPOSIT (Operators · Input · Variables) ---------- */
+  if(n===6){
+    const body=el('div');
+    body.innerHTML=`<h3>Deposit Money</h3>
+      <div class="sub">Formula: <b>balance = balance + amount</b> (the + operator).</div>`;
+    const f=el('div','field atm-field');const amt=el('input');amt.type='number';amt.inputMode='numeric';amt.placeholder='Enter amount';f.appendChild(amt);body.appendChild(f);
+    const card=el('div','bal-card',`<div class="lbl">BALANCE</div><div class="amt">${rupees(a.balance)}</div>`);body.appendChild(card);
+    const dep=el('button','abtn gold','Deposit 💵');
+    dep.onclick=()=>{const v=Number(amt.value);if(!(v>0)){toast('Enter an amount');Audio_.wrong();return;}
+      a.balance=a.balance+v;              // OPERATOR: add
+      pushTxn('Deposit',v);moneyAnim('💵');Audio_.correct();markStage(6);toast('✅ Deposited '+rupees(v));render();};
+    body.appendChild(dep);
+    return stageBox(6,body);
+  }
+
+  /* ---------- STAGE 7 · WITHDRAW (Operators · Decision) ---------- */
+  if(n===7){
+    const body=el('div');
+    body.innerHTML=`<h3>Withdraw Money</h3>
+      <div class="code" style="background:rgba(0,0,0,.25);border-color:rgba(120,220,255,.2);color:#cfe">${hi('if (amount > balance)\n   "Insufficient Balance"\nelse\n   balance = balance - amount')}</div>`;
+    const f=el('div','field atm-field');const amt=el('input');amt.type='number';amt.inputMode='numeric';amt.placeholder='Enter amount';f.appendChild(amt);body.appendChild(f);
+    const card=el('div','bal-card',`<div class="lbl">BALANCE</div><div class="amt">${rupees(a.balance)}</div>`);body.appendChild(card);
+    const wd=el('button','abtn','Withdraw 💸');
+    wd.onclick=()=>{const v=Number(amt.value);if(!(v>0)){toast('Enter an amount');Audio_.wrong();return;}
+      // DECISION: enough money?
+      if(v>a.balance){toast('❌ Insufficient Balance');Audio_.wrong();return;}
+      a.balance=a.balance-v;              // OPERATOR: subtract
+      pushTxn('Withdraw',-v);Audio_.correct();markStage(7);
+      const rec=el('div','atm-receipt',`CODE BANK — RECEIPT<br>Withdrawn: ${rupees(v)}<br>Balance: ${rupees(a.balance)}<br>Thank you!`);
+      body.appendChild(rec);moneyAnim('💸');toast('✅ Withdrawn '+rupees(v));render();};
+    body.appendChild(wd);
+    return stageBox(7,body);
+  }
+
+  /* ---------- STAGE 8 · FAST CASH (Switch) ---------- */
+  if(n===8){
+    const body=el('div');
+    body.innerHTML=`<h3>Fast Cash</h3><div class="sub">Each button is one <b>switch case</b> that withdraws a fixed amount.</div>`;
+    const amounts=[500,1000,2000,5000,10000];
+    amounts.forEach(amt=>{const b=el('button','abtn ghost','Withdraw '+rupees(amt));b.style.marginBottom='7px';
+      b.onclick=()=>{ // SWITCH: choose the case that matches the button
+        if(amt>a.balance){toast('❌ Insufficient Balance');Audio_.wrong();return;}
+        a.balance-=amt;pushTxn('Fast Cash',-amt);moneyAnim('💵');Audio_.correct();markStage(8);toast('✅ '+rupees(amt)+' dispensed');render();};
+      body.appendChild(b);});
+    body.appendChild(el('div','bal-card',`<div class="lbl">BALANCE</div><div class="amt">${rupees(a.balance)}</div>`));
+    return stageBox(8,body);
+  }
+
+  /* ---------- STAGE 9 · MINI STATEMENT (Loops) ---------- */
+  if(n===9){
+    if(a.transactions.length===0){pushTxn('Deposit',2000);pushTxn('Withdraw',-500);pushTxn('Fast Cash',-1000);} // sample data
+    const body=el('div');
+    body.innerHTML=`<h3>Mini Statement</h3><div class="sub">A <b>loop</b> goes through your transactions and makes one card for each.</div>`;
+    if(a.progress>=9){body.appendChild(statementList());}
+    else{const v=el('button','abtn gold','🧾 View Last 5 Transactions');
+      v.onclick=()=>{markStage(9);Audio_.correct();render();};body.appendChild(v);}
+    return stageBox(9,body);
+  }
+
+  /* ---------- STAGE 10 · DECORATOR (Nested Loops · Patterns) ---------- */
+  if(n===10){
+    const body=el('div');
+    body.innerHTML=`<h3>Decorate your ATM</h3><div class="sub">Pick a colour, then a <b>nested loop</b> draws a decorative pattern.</div>`;
+    const sw=el('div','opt-row');
+    ['#38e1ff','#9bff5e','#ffd23f','#ff4d9d','#a855ff','#ff8a5c'].forEach(col=>{
+      const s=el('button','swatch'+(a.deco.color===col&&a.deco.colorChosen?' active':''));s.style.background=col;
+      s.onclick=()=>{a.deco.color=col;a.deco.colorChosen=true;Audio_.click();checkDeco();render();};sw.appendChild(s);});
+    body.appendChild(sw);
+    const gen=el('button','abtn','✨ Generate Pattern');gen.style.margin='8px 0';
+    gen.onclick=()=>{a.deco.pattern=true;Audio_.pick();checkDeco();render();};
+    body.appendChild(gen);
+    if(a.deco.pattern)body.appendChild(decoGrid(a.deco.color));
+    return stageBox(10,body);
+  }
+}
+function checkDeco(){const a=state.atm;if(a.deco.colorChosen&&a.deco.pattern&&a.progress<10){markStage(10);Audio_.correct();Confetti.celebrate();toast('✅ ATM decorated!');}}
+function decoGrid(color){
+  const rows=5,cols=5;const g=el('div','deco-grid');g.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  // NESTED LOOP: outer loop picks the row, inner loop fills each column -> a pattern
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const on=(r+c)%2===0;const cell=el('div','d');
+      cell.style.background=on?color:'transparent';cell.style.border='1px solid '+color+'55';
+      cell.textContent=on?'✦':'';g.appendChild(cell);
+    }
+  }
+  return g;
+}
+function statementList(){
+  const list=el('div','txn-list');const tx=state.atm.transactions;
+  const start=Math.max(0,tx.length-5);
+  // LOOP through the last five transactions (newest first)
+  for(let i=tx.length-1;i>=start;i--){const t=tx[i];const pos=t.amount>=0;
+    list.appendChild(el('div','txn',`<span class="t-type">${pos?'⬇️':'⬆️'} ${esc(t.type)}</span><span class="amt ${pos?'pos':'neg'}">${pos?'+':'-'}${rupees(Math.abs(t.amount))}</span>`));}
+  if(tx.length===0)list.appendChild(el('div','sub','No transactions yet.'));
+  return list;
+}
+
+/* ---------- FINAL TEST · everything works together ---------- */
+function initFinal(){const a=state.atm;a.loggedIn=false;a.view='welcome';a.entry='';a.used={};}
+function atmFinalTest(){
+  const a=state.atm;const box=el('div');
+  box.appendChild(learnBanner('🏆','Final Test — use every feature together, just like real software.'));
+  const need=[['login','Login 🔐'],['balance','Check Balance 💰'],['deposit','Deposit ➕'],['withdraw','Withdraw ➖'],['fastcash','Fast Cash ⚡'],['statement','Mini Statement 🧾'],['exit','Exit 🚪']];
+  const chk=el('div','glass card');chk.innerHTML='<div class="eyebrow">Mission checklist</div>';
+  const list=el('div','checklist');
+  need.forEach(([k,label])=>{const d=!!a.used[k];list.appendChild(el('div','check-item'+(d?' done':''),`<span class="box">${d?'✓':''}</span> ${label}`));});
+  chk.appendChild(list);box.appendChild(chk);
+  box.appendChild(atmFrame(finalBody(),{blink:!a.loggedIn}));
+  if(need.every(([k])=>a.used[k])){const b=el('button','btn gold','🎉 Complete the ATM!');b.onclick=completeATM;
+    const f=el('div','footbar');f.style.justifyContent='center';f.appendChild(b);box.appendChild(f);}
+  return box;
+}
+function finalBody(){
+  const a=state.atm;const body=el('div');
+  const back=()=>{const b=el('button','abtn ghost','← Back to Menu');b.onclick=()=>{a.view='menu';render();};return b;};
+  if(!a.loggedIn){
+    if(a.view!=='login'){body.innerHTML=`<h3>${esc(a.bank)}</h3><div class="sub">Insert your card to begin.</div>`;
+      const b=el('button','abtn gold','Insert Card 💳');b.onclick=()=>{a.view='login';a.entry='';render();};body.appendChild(b);return body;}
+    body.innerHTML=`<h3>Enter PIN</h3><div class="sub">Hint: ${esc(String(a.pin))}</div>`;
+    body.appendChild(atmKeypad(v=>{if(v===String(a.pin)){a.loggedIn=true;a.used.login=true;a.view='menu';a.entry='';Audio_.correct();toast('✅ Logged in');render();}
+      else{Audio_.wrong();toast('❌ Wrong PIN');a.entry='';render();}}));
+    return body;
+  }
+  if(a.view==='menu'){
+    body.innerHTML=`<h3>Main Menu</h3><div class="sub">Choose an option (switch).</div>`;
+    const grid=el('div','menu-grid');
+    [['balance','💰','Balance'],['deposit','➕','Deposit'],['withdraw','➖','Withdraw'],['fastcash','⚡','Fast Cash'],['statement','🧾','Statement'],['exit','🚪','Exit']].forEach(([v,ic,label])=>{
+      const mi=el('div','menu-item'+(a.used[v]?' wired':''),`<span class="mi">${ic}</span>${label}`);
+      mi.onclick=()=>{Audio_.click();
+        if(v==='exit'){a.used.exit=true;a.loggedIn=false;a.view='welcome';toast('👋 Thank you for banking!');render();return;}
+        if(v==='balance')a.used.balance=true;
+        if(v==='statement')a.used.statement=true;
+        a.view=v;render();};
+      grid.appendChild(mi);});
+    body.appendChild(grid);return body;
+  }
+  if(a.view==='balance'){body.innerHTML='<h3>Balance</h3>';
+    body.appendChild(el('div','bal-card',`<div class="lbl">AVAILABLE BALANCE</div><div class="amt">${rupees(a.balance)}</div>`));body.appendChild(back());return body;}
+  if(a.view==='deposit'){body.innerHTML='<h3>Deposit</h3>';
+    const f=el('div','field atm-field');const amt=el('input');amt.type='number';amt.inputMode='numeric';amt.placeholder='Amount';f.appendChild(amt);body.appendChild(f);
+    const b=el('button','abtn gold','Deposit 💵');b.onclick=()=>{const v=Number(amt.value);if(!(v>0)){toast('Enter an amount');return;}
+      a.balance+=v;pushTxn('Deposit',v);a.used.deposit=true;moneyAnim('💵');Audio_.correct();toast('✅ +'+rupees(v));a.view='menu';render();};
+    body.appendChild(b);body.appendChild(back());return body;}
+  if(a.view==='withdraw'){body.innerHTML='<h3>Withdraw</h3>';
+    const f=el('div','field atm-field');const amt=el('input');amt.type='number';amt.inputMode='numeric';amt.placeholder='Amount';f.appendChild(amt);body.appendChild(f);
+    const b=el('button','abtn','Withdraw 💸');b.onclick=()=>{const v=Number(amt.value);if(!(v>0)){toast('Enter an amount');return;}
+      if(v>a.balance){toast('❌ Insufficient Balance');Audio_.wrong();return;}
+      a.balance-=v;pushTxn('Withdraw',-v);a.used.withdraw=true;moneyAnim('💸');Audio_.correct();toast('✅ -'+rupees(v));a.view='menu';render();};
+    body.appendChild(b);body.appendChild(back());return body;}
+  if(a.view==='fastcash'){body.innerHTML='<h3>Fast Cash</h3>';
+    [500,1000,2000,5000,10000].forEach(amt=>{const b=el('button','abtn ghost',rupees(amt));b.style.marginBottom='7px';
+      b.onclick=()=>{if(amt>a.balance){toast('❌ Insufficient Balance');Audio_.wrong();return;}
+        a.balance-=amt;pushTxn('Fast Cash',-amt);a.used.fastcash=true;moneyAnim('💵');Audio_.correct();toast('✅ '+rupees(amt));a.view='menu';render();};
+      body.appendChild(b);});
+    body.appendChild(back());return body;}
+  if(a.view==='statement'){body.innerHTML='<h3>Mini Statement</h3>';body.appendChild(statementList());body.appendChild(back());return body;}
+  return body;
+}
+function completeATM(){
+  state.atm.done=true;state.xp+=300;Audio_.win();syncProgress();
+  Confetti.fireworks();moneyAnim('🪙',30);setTimeout(()=>moneyAnim('💵',24),500);
+  state.atm.stage=12;render();
+}
+function atmDone(){
+  setTimeout(()=>{Confetti.fireworks();moneyAnim('🪙',26);},200);
+  const box=el('div');
+  const c=el('div','card glass complete');
+  c.innerHTML=`<div class="badge-earned">🏆</div>
+    <div class="eyebrow" style="justify-content:center">Capstone Complete</div>
+    <h1 style="background:linear-gradient(135deg,#38e1ff,#ffd23f);-webkit-background-clip:text;background-clip:text;color:transparent">CONGRATULATIONS!</h1>
+    <p style="font-family:var(--font-display);font-weight:700;font-size:1.15rem">${esc(state.name)}, you built your first software application — a working ATM machine.</p>
+    <div class="feat" style="justify-content:center;margin-top:8px">
+      <span>✔ Hello World</span><span>✔ Variables</span><span>✔ Data Types</span><span>✔ Input</span><span>✔ Operators</span><span>✔ Decisions</span><span>✔ Switch</span><span>✔ Loops</span><span>✔ Patterns</span></div>
+    <p class="muted" style="font-weight:700;margin-top:14px">Welcome to the world of programming. 🎉</p>`;
+  const foot=el('div','footbar');foot.style.justifyContent='center';
+  const cert=el('button','btn gold','📜 Download Certificate');cert.onclick=()=>makeATMCert();
+  const map=el('button','btn','🗺️ Back to Quest Map');map.onclick=()=>{Audio_.click();state.screen='map';render();};
+  foot.appendChild(cert);foot.appendChild(map);c.appendChild(foot);
+  box.appendChild(c);
+  box.appendChild(el('div','glass card center',`<div class="muted" style="font-weight:700">🏰 The Final Castle is now unlocked on your Quest Map!</div>`));
+  return box;
+}
+
+// generic certificate drawer (used by the ATM project)
+function drawCertificate(o){
+  const W=1240,H=877,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const grad=g.createLinearGradient(0,0,W,H);grad.addColorStop(0,'#0e2233');grad.addColorStop(.5,'#12324a');grad.addColorStop(1,'#0a1a2b');
+  g.fillStyle=grad;g.fillRect(0,0,W,H);
+  const glow=(x,y,r,col)=>{const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,col);rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,W,H);};
+  glow(200,140,420,'rgba(56,225,255,.42)');glow(1050,760,460,'rgba(255,210,63,.34)');
+  g.strokeStyle='rgba(255,210,63,.9)';g.lineWidth=6;g.strokeRect(40,40,W-80,H-80);
+  g.strokeStyle='rgba(255,255,255,.25)';g.lineWidth=2;g.strokeRect(58,58,W-116,H-116);
+  const cx=W/2;g.textAlign='center';
+  g.fillStyle='#ffd23f';g.font='900 30px "Baloo 2",Arial';g.fillText(o.brand,cx,150);
+  g.fillStyle='#a9d6ea';g.font='700 22px Arial';g.fillText('CERTIFICATE OF COMPLETION',cx,195);
+  g.fillStyle='#e5f6ff';g.font='600 26px Arial';g.fillText('This certifies that',cx,285);
+  g.fillStyle='#7fe7ff';g.font='900 64px "Baloo 2",Arial';g.fillText(state.name,cx,360);
+  g.fillStyle='#e5f6ff';g.font='600 25px Arial';g.fillText(o.line1,cx,423);
+  g.fillStyle='#9bff5e';g.font='800 36px "Baloo 2",Arial';g.fillText(o.line2,cx,476);
+  g.font='58px Arial';g.fillText(o.emoji||'🏆',cx,562);
+  g.fillStyle='#ffd23f';g.font='800 24px "Baloo 2",Arial';g.fillText(o.badge,cx,616);
+  const date=new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  g.strokeStyle='rgba(255,255,255,.3)';g.lineWidth=2;g.beginPath();g.moveTo(230,720);g.lineTo(500,720);g.stroke();g.beginPath();g.moveTo(740,720);g.lineTo(1010,720);g.stroke();
+  g.fillStyle='#a9d6ea';g.font='600 20px Arial';g.fillText(date,365,706);g.fillText('Date',365,750);g.fillText('Level Up Academy',875,706);g.fillText('Instructor',875,750);
+  try{const jsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;if(!jsPDF)throw 0;
+    const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[W,H]});pdf.addImage(cv.toDataURL('image/png'),'PNG',0,0,W,H);
+    pdf.save(o.file+'_'+state.name.replace(/\s+/g,'_')+'.pdf');toast('📜 Certificate downloaded!');}
+  catch(e){const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download=o.file+'_'+state.name.replace(/\s+/g,'_')+'.png';a.click();toast('📜 Certificate saved!');}
+}
+function makeATMCert(){Audio_.click();drawCertificate({brand:'🏧 CODE BANK · LEVEL UP',
+  line1:'has designed and built a fully working',line2:'ATM Machine using core programming concepts',
+  badge:'★ Certified ATM Builder ★',emoji:'🏧',file:'ATM_Builder_Certificate'});}
+
+/* boot */
+(async()=>{
+  try{ const resumed = await sbBoot(); if(resumed){ render(); return; } }
+  catch(e){ console.warn('sbBoot error',e); }
+  render();
+})();
+</script>
+</body>
+</html>
