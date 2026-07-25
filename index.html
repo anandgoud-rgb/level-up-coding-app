@@ -1006,10 +1006,10 @@ function applyProgress(p){
   }
   if(p.atm_done) state._atmDoneRestored=true;
   ensureWeb();
-  const fill=(track,n)=>{for(let i=0;i<n;i++)state.web.lessons[track].done[i]=true;};
-  fill('html', Math.min(p.html_done||0,10));
-  fill('css',  Math.min(p.css_done||0,10));
-  fill('js',   Math.min(p.js_done||0,10));
+  const fill=(track,n)=>{const max=WEB_LEVELS[track].length;for(let i=0;i<Math.min(n,max);i++)state.web.lessons[track].done[i]=true;};
+  fill('html', p.html_done||0);
+  fill('css',  p.css_done||0);
+  fill('js',   p.js_done||0);
   if(p.instagram) state.web.done=true;
 }
 
@@ -1464,9 +1464,9 @@ function ensureWeb(){
   state.web={
     view:'hub', track:null, lvl:0,
     lessons:{
-      html:{done:new Array(10).fill(false), code:new Array(10).fill(null)},
-      css:{done:new Array(10).fill(false), code:new Array(10).fill(null)},
-      js:{done:new Array(10).fill(false), code:new Array(10).fill(null)}
+      html:{done:new Array(WEB_LEVELS.html.length).fill(false), code:new Array(WEB_LEVELS.html.length).fill(null)},
+      css:{done:new Array(WEB_LEVELS.css.length).fill(false), code:new Array(WEB_LEVELS.css.length).fill(null)},
+      js:{done:new Array(WEB_LEVELS.js.length).fill(false), code:new Array(WEB_LEVELS.js.length).fill(null)}
     },
     stage:0, built:{}, s1done:false, s2done:false, done:false,
     css:{theme:'light',shape:'square',align:'left',btn:'square',gradient:false,shadow:false,font:'classic'},
@@ -1930,7 +1930,7 @@ function webDone(){
    ============================================================ */
 
 const WEB_META={
-  html:{name:'HTML',icon:'📄',lang:'HTML',tagline:'Structure · 10 levels',grad:'linear-gradient(135deg,#ff7a59,#ff3d81)',certBrand:'📄 HTML · LEVEL UP',certBadge:'★ HTML Beginner ★',certEmoji:'📄'},
+  html:{name:'HTML',icon:'📄',lang:'HTML',tagline:'Structure · 11 levels',grad:'linear-gradient(135deg,#ff7a59,#ff3d81)',certBrand:'📄 HTML · LEVEL UP',certBadge:'★ HTML Beginner ★',certEmoji:'📄'},
   css:{name:'CSS',icon:'🎨',lang:'CSS',tagline:'Styling · 10 levels',grad:'linear-gradient(135deg,#38bdf8,#6366f1)',certBrand:'🎨 CSS · LEVEL UP',certBadge:'★ CSS Stylist ★',certEmoji:'🎨'},
   js:{name:'JavaScript',icon:'⚡',lang:'JavaScript',tagline:'Logic · 10 levels',grad:'linear-gradient(135deg,#eab308,#f59e0b)',certBrand:'⚡ JAVASCRIPT · LEVEL UP',certBadge:'★ JavaScript Coder ★',certEmoji:'⚡'}
 };
@@ -1980,13 +1980,20 @@ const WEB_LEVELS={
             {name:'It has 3 or more <li> items',fn:c=>{const u=c.doc.querySelector('ul');return u&&u.querySelectorAll('li').length>=3;}},
             {name:'The <ul> is opened and closed',fn:c=>/<ul[^>]*>[\s\S]*?<\/ul>/i.test(c.code)},
             {name:'Every <li> has a closing </li>',fn:c=>{const open=(c.code.match(/<li[\s>]/gi)||[]).length;const close=(c.code.match(/<\/li>/gi)||[]).length;return open>=3&&open===close;}}]},
-    {title:'Level 6 · Buttons',concept:'<button> is something people can click.',
+    {title:'Level 6 · Ordered lists',concept:'<ol> makes a numbered list; each item is an <li>.',
+     task:'Make an <code>&lt;ol&gt;</code> with at least <b>three</b> <code>&lt;li&gt;</code> items (steps in order).',
+     starter:'',
+     tests:[{name:'There is an <ol>',fn:c=>!!c.doc.querySelector('ol')},
+            {name:'It has 3 or more <li> items',fn:c=>{const o=c.doc.querySelector('ol');return o&&o.querySelectorAll('li').length>=3;}},
+            {name:'The <ol> is opened and closed',fn:c=>/<ol[^>]*>[\s\S]*?<\/ol>/i.test(c.code)},
+            {name:'Every <li> has a closing </li>',fn:c=>{const open=(c.code.match(/<li[\s>]/gi)||[]).length;const close=(c.code.match(/<\/li>/gi)||[]).length;return open>=3&&open===close;}}]},
+    {title:'Level 7 · Buttons',concept:'<button> is something people can click.',
      task:'Add a <code>&lt;button&gt;</code> that says <b>Follow</b>.',
      starter:'',
      tests:[{name:'There is a <button>',fn:c=>!!c.doc.querySelector('button')},
             {name:'The button has text',fn:c=>{const b=c.doc.querySelector('button');return b&&b.textContent.trim().length>0;}},
             {name:'The <button> is opened and closed',fn:c=>/<button[^>]*>[\s\S]*?<\/button>/i.test(c.code)}]},
-    {title:'Level 7 · Containers',concept:'<div> is a box that groups elements together.',
+    {title:'Level 8 · Containers',concept:'<div> is a box that groups elements together.',
      task:'Create a <code>&lt;div&gt;</code> and put a heading and a paragraph <b>inside</b> it.',
      starter:'',
      tests:[{name:'There is a <div>',fn:c=>!!c.doc.querySelector('div')},
@@ -1994,19 +2001,19 @@ const WEB_LEVELS={
             {name:'A paragraph is inside the div',fn:c=>hasInDiv(c.doc,['p'])},
             {name:'The <div> is opened and closed',fn:c=>/<div[^>]*>[\s\S]*?<\/div>/i.test(c.code)},
             {name:'Heading and <p> are closed',fn:c=>/<(h[1-6])[^>]*>[\s\S]*?<\/\1>/i.test(c.code)&&/<p[^>]*>[\s\S]*?<\/p>/i.test(c.code)}]},
-    {title:'Level 8 · Emphasis',concept:'<strong> makes text bold; <em> makes it italic.',
+    {title:'Level 9 · Emphasis',concept:'<strong> makes text bold; <em> makes it italic.',
      task:'Write a sentence using <code>&lt;strong&gt;</code> for a bold word and <code>&lt;em&gt;</code> for an italic word.',
      starter:'',
      tests:[{name:'Uses <strong> with text',fn:c=>{const s=c.doc.querySelector('strong');return s&&s.textContent.trim().length>0;}},
             {name:'Uses <em> with text',fn:c=>{const e=c.doc.querySelector('em');return e&&e.textContent.trim().length>0;}},
             {name:'<strong> is opened and closed',fn:c=>/<strong[^>]*>[\s\S]*?<\/strong>/i.test(c.code)},
             {name:'<em> is opened and closed',fn:c=>/<em[^>]*>[\s\S]*?<\/em>/i.test(c.code)}]},
-    {title:'Level 9 · Inputs',concept:'<input> lets users type something in.',
+    {title:'Level 10 · Inputs',concept:'<input> lets users type something in.',
      task:'Add a text <code>&lt;input&gt;</code> with a <code>placeholder</code> like "Your name".',
      starter:'',
      tests:[{name:'There is an <input>',fn:c=>!!c.doc.querySelector('input')},
             {name:'It has a placeholder',fn:c=>{const i=c.doc.querySelector('input');return i&&(i.getAttribute('placeholder')||'').length>0;}}]},
-    {title:'Level 10 · Mini profile card',concept:'Combine tags to build a real block of a page.',
+    {title:'Level 11 · Mini profile card',concept:'Combine tags to build a real block of a page.',
      task:'Build a mini profile: one <code>&lt;div&gt;</code> that contains an <code>&lt;img&gt;</code>, an <code>&lt;h2&gt;</code>, a <code>&lt;p&gt;</code> and a <code>&lt;button&gt;</code>.',
      starter:'',
      tests:[{name:'A single <div> holds everything',fn:c=>hasInDiv(c.doc,['img','h2','p','button'])},
@@ -2315,7 +2322,7 @@ function webSectionDone(){
     +'<div class="eyebrow" style="justify-content:center">'+m.name+' track complete</div>'
     +'<h1 style="background:'+m.grad+';-webkit-background-clip:text;background-clip:text;color:transparent">Great job, '+esc(state.name)+'!</h1>'
     +'<p style="font-family:var(--font-display);font-weight:700;font-size:1.12rem">You finished all '+WEB_LEVELS[track].length+' '+m.name+' levels by writing real code and passing every test.</p>'
-    +'<div class="feat" style="justify-content:center;margin-top:6px"><span>'+m.icon+' '+m.name+'</span><span>✅ 10 / 10 levels</span><span>✦ +'+(WEB_LEVELS[track].length*25)+' XP</span></div>';
+    +'<div class="feat" style="justify-content:center;margin-top:6px"><span>'+m.icon+' '+m.name+'</span><span>✅ '+WEB_LEVELS[track].length+' / '+WEB_LEVELS[track].length+' levels</span><span>✦ +'+(WEB_LEVELS[track].length*25)+' XP</span></div>';
   const foot=el('div','footbar');foot.style.justifyContent='center';
   const cert=el('button','btn gold','📜 Download '+m.name+' Certificate');cert.onclick=()=>webCert(track);
   const hub=el('button','btn','← Back to Path');hub.onclick=()=>{Audio_.click();state.web.view='hub';render();};
