@@ -1942,11 +1942,18 @@ function hasInDiv(doc,sels){const divs=[].slice.call(doc.querySelectorAll('div')
 /* ---- the 30 levels ---- */
 const WEB_LEVELS={
   html:[
-    {title:'Level 1 · Headings',concept:'<h1> shows big, bold title text.',
-     task:'Add an <code>&lt;h1&gt;</code> heading with the text <b>My Profile</b>.',
-     starter:'',
-     tests:[{name:'There is an <h1> element',fn:c=>!!c.doc.querySelector('h1')},
-            {name:'The <h1> has some text',fn:c=>{const h=c.doc.querySelector('h1');return h&&h.textContent.trim().length>0;}}]},
+    {title:'Level 1 · Headings',concept:'HTML has six heading sizes, <h1> (biggest) down to <h6> (smallest).',
+     task:'Add all six headings — <code>&lt;h1&gt;</code> through <code>&lt;h6&gt;</code> — each with some text inside. Remember to close every tag (e.g. <code>&lt;h1&gt;Hello&lt;/h1&gt;</code>).',
+     starter:'<h1>Heading 1</h1>\n',
+     tests:[
+       {name:'<h1> is opened and closed',fn:c=>/<h1[^>]*>[\s\S]*?<\/h1>/i.test(c.code)},
+       {name:'<h2> is opened and closed',fn:c=>/<h2[^>]*>[\s\S]*?<\/h2>/i.test(c.code)},
+       {name:'<h3> is opened and closed',fn:c=>/<h3[^>]*>[\s\S]*?<\/h3>/i.test(c.code)},
+       {name:'<h4> is opened and closed',fn:c=>/<h4[^>]*>[\s\S]*?<\/h4>/i.test(c.code)},
+       {name:'<h5> is opened and closed',fn:c=>/<h5[^>]*>[\s\S]*?<\/h5>/i.test(c.code)},
+       {name:'<h6> is opened and closed',fn:c=>/<h6[^>]*>[\s\S]*?<\/h6>/i.test(c.code)},
+       {name:'Every heading has text inside',fn:c=>{for(let i=1;i<=6;i++){const h=c.doc.querySelector('h'+i);if(!h||h.textContent.trim().length===0)return false;}return true;}}
+     ]},
     {title:'Level 2 · Paragraphs',concept:'<p> holds a line of normal text.',
      task:'Add a <code>&lt;p&gt;</code> paragraph that describes you.',
      starter:'<h1>My Profile</h1>\n',
