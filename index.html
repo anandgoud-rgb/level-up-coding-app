@@ -2755,7 +2755,7 @@ function drawCertificate(o){
     g.fillStyle=NAVY;g.font='700 24px Arial';g.textAlign='left';g.fillText(state.college||'',LX,fy-16);
     g.fillStyle=GREY;g.font='600 21px Arial';g.fillText('Batch '+(state.batch||''),LX,fy+32);
     // right: Ankur Jain signature block (image includes name, title, signature and its own line)
-    if(sig){const sw=430,sh=sig.height*(sw/sig.width);g.drawImage(sig,W-84-sw,fy+44-sh,sw,sh);}
+    if(sig){const sw=250,sh=sig.height*(sw/sig.width);g.drawImage(sig,W-84-sw,fy+30-sh,sw,sh);}
     else{
       const rx=W-84-380;g.textAlign='left';
       g.fillStyle=NAVY;g.font='800 28px Arial';g.fillText('Ankur Jain',rx,fy-40);
