@@ -909,6 +909,51 @@ function mountPuzzle(p){
    RENDER
    ============================================================ */
 const app=$('#app');
+/* ---- URL routing (hash-based) ---- */
+let _routing=false, _pendingRoute=null;
+function stateToHash(){
+  const s=state;
+  if(s.screen==='welcome')return '#/';
+  if(s.screen==='select')return '#/select';
+  if(s.screen==='map')return '#/java';
+  if(s.screen==='level')return '#/java/'+(s.curId!=null?s.curId:'');
+  if(s.screen==='finale')return '#/finale';
+  if(s.screen==='atm')return '#/atm';
+  if(s.screen.indexOf('web')===0){
+    const w=s.web||{};
+    if(w.view==='ig')return '#/instagram';
+    if(w.view==='level')return '#/'+(w.track||'web')+'/'+((w.lvl||0)+1);
+    if(w.view==='sectiondone')return '#/'+(w.track||'web')+'/done';
+    return '#/web';
+  }
+  return '#/';
+}
+function syncHash(){ try{ const h=stateToHash(); if(location.hash!==h){ _routing=true; location.hash=h; } }catch(e){} }
+function routeFromHash(){
+  const raw=(location.hash||'').replace(/^#/,'').replace(/^\//,'');
+  const parts=raw.split('/').filter(function(x){return x!=='';});
+  const p0=parts[0]||'';
+  if(!state.name){ if(p0&&p0!=='welcome'){ _pendingRoute=location.hash; } state.screen='welcome'; return; }
+  if(p0===''||p0==='welcome'){ state.screen='select'; return; }
+  if(p0==='select'){ state.screen='select'; return; }
+  if(p0==='web'){ ensureWeb(); state.web.view='hub'; state.screen='web'; return; }
+  if(p0==='instagram'){ ensureWeb(); state.web.view='ig'; state.screen='web'; return; }
+  if(p0==='atm'){ state.screen='atm'; return; }
+  if(p0==='finale'){ state.screen='finale'; return; }
+  if(p0==='java'){
+    if(parts[1]&&LEVELS.some(function(l){return String(l.id)===parts[1];})){ state.curId=isNaN(parts[1])?parts[1]:parseInt(parts[1],10); state.phase='intro'; state.screen='level'; }
+    else { state.screen='map'; }
+    return;
+  }
+  if(p0==='html'||p0==='css'||p0==='js'){
+    ensureWeb(); state.web.track=p0;
+    if(parts[1]==='done'){ state.web.view='sectiondone'; }
+    else { const max=WEB_LEVELS[p0].length; let n=parseInt(parts[1]||'1',10); if(isNaN(n))n=1; state.web.lvl=Math.min(Math.max(n,1),max)-1; state.web.view='level'; }
+    state.screen='web'; return;
+  }
+  state.screen='select';
+}
+
 function render(){
   app.innerHTML='';
   app.appendChild(topbar());
@@ -919,6 +964,7 @@ function render(){
   else if(state.screen==='finale')app.appendChild(screenFinale());
   else if(state.screen==='atm')app.appendChild(screenATM());
   else if(state.screen.indexOf('web')===0)app.appendChild(screenWeb());
+  syncHash();
 }
 function topbar(){
   const bar=el('div','topbar glass');
@@ -1089,13 +1135,15 @@ function screenWelcome(){
       state.college=coll.value;
       state.program=prog.value;
       state.batch=batch.value;
-      // persist identity for auto-login on return visits
-      localStorage.setItem('lu_student', JSON.stringify({
+      // persist identity for this browser session (survives refresh, clears on tab close)
+      sessionStorage.setItem('lu_student', JSON.stringify({
         name:state.name, email:state.email, college:state.college,
         program:state.program, batch:state.batch
       }));
-      // go immediately — don't wait for sheet
-      state.screen='select'; Audio_.unlock(); render(); startQuoteTimer();
+      // go to the requested page (if arrived via a direct link) or the challenge select
+      if(_pendingRoute){ const t=_pendingRoute;_pendingRoute=null; _routing=true; location.hash=t; routeFromHash(); }
+      else { state.screen='select'; }
+      Audio_.unlock(); render(); startQuoteTimer();
       // load progress in background; register new students right away
       loadProgress().then(p=>{
         if(p){ applyProgress(p); render(); toast('Welcome back, '+state.name+'! Progress restored ✅'); }
@@ -1360,7 +1408,7 @@ function screenSelect(){
   box.appendChild(head);
   setTimeout(()=>{
     const r=document.getElementById('resetStudent');
-    if(r) r.onclick=(e)=>{e.preventDefault();localStorage.removeItem('lu_student');state.screen='welcome';state.web=null;state.progress={};state.xp=0;state.atm=null;state._atmDoneRestored=false;render();};
+    if(r) r.onclick=(e)=>{e.preventDefault();sessionStorage.removeItem('lu_student');state.name='';state.web=null;state.progress={};state.xp=0;state.atm=null;state._atmDoneRestored=false;state.screen='welcome';render();};
   },30);
 
   const grid=el('div','select-grid');
@@ -2779,9 +2827,17 @@ function makeATMCert(){drawCertificate({track:'ATM Machine',file:'ATM_Builder_Ce
 
 /* boot */
 (async()=>{
-  try{ const resumed = await sbBoot(); if(resumed){ render(); return; } }
-  catch(e){ console.warn('sbBoot error',e); }
+  try{
+    const saved=sessionStorage.getItem('lu_student');
+    if(saved){ const s=JSON.parse(saved); if(s&&s.name&&s.email&&s.college){
+      state.name=s.name;state.email=s.email;state.program=s.program;state.college=s.college;state.batch=s.batch;
+      loadProgress().then(function(p){if(p){applyProgress(p);render();}}).catch(function(){});
+    }}
+  }catch(e){}
+  routeFromHash();
   render();
+  if(state.name){try{startQuoteTimer();}catch(e){}}
+  window.addEventListener('hashchange',function(){ if(_routing){_routing=false;return;} routeFromHash(); render(); });
 })();
 </script>
 </body>
