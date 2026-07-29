@@ -416,6 +416,13 @@ html[data-theme="light"] .phone .notch{background:#241a4d}
 .ig-phone{width:100%;max-width:330px}
 .ig-screen{padding:30px 0 0;display:block}
 .ig-frame{width:100%;height:100%;border:0;background:#fff;display:block}
+.style-group{margin-bottom:12px}
+.sg-title{font-weight:800;font-size:.9rem;font-family:var(--font-display)}
+.sg-hint{color:var(--muted);font-size:.72rem;font-weight:600;margin:1px 0 6px;line-height:1.35}
+.sg-opts{display:flex;flex-wrap:wrap;gap:6px}
+.style-opt{border:1.5px solid var(--border);background:#fff;border-radius:9px;padding:6px 11px;font-size:.78rem;font-weight:700;cursor:pointer;color:#39406b;transition:.12s}
+.style-opt:hover{border-color:var(--cyan)}
+.style-opt.active{background:var(--cyan);color:#fff;border-color:transparent}
 .ig-right{display:flex;flex-direction:column;gap:14px}
 .code-tabs{display:flex;gap:6px;margin-bottom:10px}
 .ctab{flex:1;padding:8px;border:1px solid var(--border);background:var(--surface);border-radius:10px 10px 0 0;font-family:var(--font-display);font-weight:800;font-size:.82rem;color:var(--muted);cursor:pointer}
@@ -1763,6 +1770,7 @@ function igInsertHTML(snip){
   Audio_.pick&&Audio_.pick(); igPreview(false);
 }
 function igRunTests(){
+  if(state.web.stage===2){ igRunTestsCSS(); return; }
   const f=document.getElementById('igFrame'); let doc=null; try{doc=f.contentDocument||f.contentWindow.document;}catch(e){}
   const tlist=document.getElementById('igTests'); if(!tlist)return; let all=true;
   IG_HTML_TESTS.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(doc);}catch(e){ok=false;} if(!ok)all=false;
@@ -1862,89 +1870,154 @@ function placePiece(item){
 }
 
 /* ---------- STAGE 2 : CSS STYLIST (click options, live preview) ---------- */
-const S2CHALLENGES=[
-  {id:'round',   label:'Round the profile picture', test:c=>c.shape==='round'},
-  {id:'center',  label:'Center the profile',        test:c=>c.align==='center'},
-  {id:'buttons', label:'Give buttons a modern look', test:c=>c.btn!=='square'},
-  {id:'gradient',label:'Apply a gradient',          test:c=>c.gradient===true},
-  {id:'shadow',  label:'Add a shadow',              test:c=>c.shadow===true}
+/* ===== STAGE 2 : CSS (grouped style options insert/replace editable CSS; live phone; tests) ===== */
+const CSS_GROUPS=[
+  {key:'theme',icon:'🎭',title:'Theme',hint:'Sets the page background and text colour.',opts:[
+    {label:'Light',css:'body{background:#fafafa;color:#111}'},
+    {label:'Dark',css:'body{background:#12142b;color:#f4f4f8}'},
+    {label:'Sunset',css:'body{background:linear-gradient(135deg,#ff9a9e,#fad0c4);color:#3a2a2a}'},
+    {label:'Instagram',css:'body{background:#ffffff;color:#111}'}
+  ]},
+  {key:'shape',icon:'⭕',title:'Profile Shape',hint:'border-radius rounds the profile picture.',opts:[
+    {label:'Square',css:'.avatar{border-radius:0}'},
+    {label:'Rounded',css:'.avatar{border-radius:16px}'},
+    {label:'Circle',css:'.avatar{border-radius:50%}'}
+  ]},
+  {key:'layout',icon:'↔',title:'Layout',hint:'text-align positions everything left or centered.',opts:[
+    {label:'Left',css:'body{text-align:left}'},
+    {label:'Centered',css:'body{text-align:center}'}
+  ]},
+  {key:'btn',icon:'🔘',title:'Button Style',hint:'Styles the Follow and Message buttons.',opts:[
+    {label:'Simple',css:'.follow-btn,.message-btn{background:#efefef;border:1px solid #ccc;border-radius:6px;padding:6px 14px;margin:3px}'},
+    {label:'Instagram',css:'.follow-btn,.message-btn{background:#0095f6;color:#fff;border:none;border-radius:8px;padding:8px 18px;margin:3px}'},
+    {label:'Pill',css:'.follow-btn,.message-btn{background:#111;color:#fff;border:none;border-radius:999px;padding:8px 20px;margin:3px}'}
+  ]},
+  {key:'post',icon:'🖼️',title:'Post Shape',hint:'Rounds the corners of the post photo.',opts:[
+    {label:'Square',css:'.post{border-radius:0}'},
+    {label:'Rounded',css:'.post{border-radius:14px}'}
+  ]},
+  {key:'shadow',icon:'🌑',title:'Shadow',hint:'A shadow lifts the post off the page.',opts:[
+    {label:'None',css:'.post{box-shadow:none}'},
+    {label:'Soft',css:'.post{box-shadow:0 4px 12px rgba(0,0,0,.12)}'},
+    {label:'Strong',css:'.post{box-shadow:0 10px 26px rgba(0,0,0,.28)}'}
+  ]},
+  {key:'font',icon:'🔤',title:'Font',hint:'Different fonts give different personalities.',opts:[
+    {label:'Classic',css:'body{font-family:Georgia,serif}'},
+    {label:'Modern',css:"body{font-family:'Helvetica Neue',Arial,sans-serif}"},
+    {label:'Playful',css:"body{font-family:'Comic Sans MS','Baloo 2',cursive}"}
+  ]}
 ];
-const SAMPLE={name:'Aarav Sharma',username:'aarav.builds',bio:'💻 Learning to code | 🚀 Building cool things',
-  profession:'Web Developer',city:'Mumbai',followers:12400,following:310,posts:64,likes:892,
-  interests:['Coding','Coffee','Travel'],highlights:['Code','Food','Travel'],pic:null,quote:''};
-function stylePhone(){
-  const phone=el('div','phone');phone.innerHTML='<div class="notch"></div>';
-  const screen=el('div','screen');screen.appendChild(buildIG(SAMPLE,state.web.css));
-  phone.appendChild(screen);return phone;
+const IG_CSS_TESTS=[
+  {name:'Profile picture is shaped (border-radius)',fn:css=>/\.avatar\s*\{[^}]*border-radius/i.test(css)},
+  {name:'Page has a theme / background',fn:css=>/body\s*\{[^}]*background/i.test(css)},
+  {name:'Buttons are styled',fn:css=>/(\.follow-btn|\.message-btn)[^{]*\{[^}]*\S/i.test(css)},
+  {name:'The post has a shadow',fn:css=>/\.post\s*\{[^}]*box-shadow\s*:\s*(?!none)/i.test(css)},
+  {name:'A font is chosen',fn:css=>/body\s*\{[^}]*font-family/i.test(css)}
+];
+function igCssApply(key,css){
+  ensureIGCode();
+  var lines=(state.web.igCode.css||'').split('\n').filter(function(l){return l.trim()!=='' && l.indexOf('/*@'+key+'*/')<0;});
+  lines.push(css+' /*@'+key+'*/');
+  state.web.igCode.css=lines.join('\n');
+  if(state.web.igTab==='css'){var e=document.getElementById('igEd'); if(e)e.value=state.web.igCode.css;}
+  Audio_.pick&&Audio_.pick();
+  igPreview(false);
 }
-function ctrlGroup(label,learn,options,current,onPick,isSwatch){
-  const g=el('div','ctrl-group');
-  g.innerHTML=`<div class="lbl">${label}</div><div class="learn">${learn}</div>`;
-  const row=el('div','opt-row');
-  options.forEach(o=>{
-    if(isSwatch){
-      const sw=el('button','swatch'+(current===o.val?' active':''));sw.style.background=o.color;sw.title=o.label;
-      sw.onclick=()=>onPick(o.val);row.appendChild(sw);
-    }else{
-      const p=el('button','opt-pill'+(current===o.val?' active':''),o.label);
-      p.onclick=()=>onPick(o.val);row.appendChild(p);
-    }
+function igCssSyncActive(){
+  const css=(state.web.igCode&&state.web.igCode.css)||'';
+  [].forEach.call(document.querySelectorAll('.ig-pieces .style-opt'),function(btn){
+    const cssText=btn.getAttribute('data-css')||'';
+    btn.classList.toggle('active', cssText!=='' && css.indexOf(cssText)>=0);
   });
-  g.appendChild(row);return g;
+}
+function igRunTestsCSS(){
+  const css=(state.web.igCode&&state.web.igCode.css)||'';
+  const tlist=document.getElementById('igTests'); if(!tlist)return; let all=true;
+  IG_CSS_TESTS.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(css);}catch(e){ok=false;} if(!ok)all=false;
+    const it=tlist.children[i]; if(it){it.className='test-item '+(ok?'pass':'fail'); const bx=it.querySelector('.tbox'); if(bx)bx.textContent=ok?'✓':'✗';} });
+  if(all)igStage2Pass(); else {Audio_.wrong&&Audio_.wrong();toast('Keep styling — some goals are not met yet!');}
+}
+function igStage2Pass(){
+  const first=!state.web.s2done; if(first){state.web.s2done=true;state.xp+=100;}
+  Audio_.win&&Audio_.win();Confetti.celebrate&&Confetti.celebrate();
+  const wrap=document.getElementById('igNext'); if(wrap){wrap.innerHTML='';
+    wrap.appendChild(el('div','pass-banner','✅ Styled beautifully! Your CSS is working.'));
+    const b=el('button','btn cyan','Unlock Stage 3 · JS ⚡'); b.onclick=function(){Audio_.click();state.web.stage=3;render();}; wrap.appendChild(b);}
+}
+function igStyleGroup(g){
+  const wrap=el('div','style-group');
+  wrap.innerHTML='<div class="sg-title">'+g.icon+' '+g.title+'</div><div class="sg-hint">'+g.hint+'</div>';
+  const row=el('div','sg-opts');
+  g.opts.forEach(function(o){
+    const btn=el('button','style-opt',o.label);
+    btn.setAttribute('data-key',g.key); btn.setAttribute('data-css',o.css);
+    btn.onclick=function(){ [].forEach.call(row.children,function(c){c.classList.remove('active');}); btn.classList.add('active'); igCssApply(g.key,o.css); };
+    row.appendChild(btn);
+  });
+  wrap.appendChild(row);
+  return wrap;
 }
 function webStage2(){
+  ensureIGCode();
+  if(state.web.igTab==null)state.web.igTab='css';
   const box=el('div');
-  box.appendChild(learnBanner('🎨','CSS adds beauty — colours, shapes, spacing and style.'));
-  const layout=el('div','stage-layout');
-  layout.appendChild(stylePhone());
+  box.appendChild(learnBanner('🎨','CSS adds the style — colours, shapes, spacing and fonts.'));
+  const grid=el('div','ig-build');
 
-  const side=el('div','side');
-  side.appendChild(el('div','glass card',`<div class="eyebrow">Stage 2 · CSS Stylist</div>
-    <div style="font-family:var(--font-display);font-weight:800;font-size:1.05rem">Click options — the preview updates instantly ✨</div>
-    <div class="muted" style="font-weight:600;font-size:.85rem;margin-top:4px">No typing. Just experiment and watch it change.</div>`));
+  // LEFT: style option groups
+  const left=el('div','ig-pieces glass card');
+  left.innerHTML='<div class="eyebrow">Style options</div><div class="muted" style="font-weight:600;font-size:.82rem;margin:4px 0 10px">Pick a style — it writes the CSS for you. Try different looks! ✨</div>';
+  CSS_GROUPS.forEach(function(g){ left.appendChild(igStyleGroup(g)); });
+  grid.appendChild(left);
 
-  const controls=el('div','glass card');
-  const css=state.web.css;
-  const setCss=(k,v)=>{css[k]=v;Audio_.click();afterStyle();};
-  // Theme (uses a switch statement under the hood)
-  controls.appendChild(ctrlGroup('🎭 Theme','A theme sets several colours at once (uses a switch statement).',
-    [{val:'light',label:'Light'},{val:'dark',label:'Dark'},{val:'instagram',label:'Instagram'},{val:'purple',label:'Purple'},{val:'blue',label:'Blue'},{val:'pink',label:'Pink'},{val:'green',label:'Green'}],
-    css.theme,v=>setCss('theme',v)));
-  controls.appendChild(ctrlGroup('⭕ Profile Shape','border-radius rounds the corners of the picture.',
-    [{val:'square',label:'Square'},{val:'rounded',label:'Rounded'},{val:'round',label:'Circle'}],css.shape,v=>setCss('shape',v)));
-  controls.appendChild(ctrlGroup('↔ Layout','Alignment decides where things sit — left or centered.',
-    [{val:'left',label:'Left'},{val:'center',label:'Centered'}],css.align,v=>setCss('align',v)));
-  controls.appendChild(ctrlGroup('🔘 Button Style','Rounded buttons feel more modern.',
-    [{val:'square',label:'Square'},{val:'rounded',label:'Rounded'},{val:'pill',label:'Pill'}],css.btn,v=>setCss('btn',v)));
-  controls.appendChild(ctrlGroup('🌈 Background','A gradient blends two colours together.',
-    [{val:false,label:'Solid'},{val:true,label:'Gradient'}],css.gradient,v=>setCss('gradient',v)));
-  controls.appendChild(ctrlGroup('🌑 Shadow','A shadow lifts the card off the page.',
-    [{val:false,label:'None'},{val:true,label:'Shadow'}],css.shadow,v=>setCss('shadow',v)));
-  controls.appendChild(ctrlGroup('🔤 Font','Different fonts give different personalities.',
-    [{val:'classic',label:'Classic'},{val:'modern',label:'Modern'},{val:'playful',label:'Playful'}],css.font,v=>setCss('font',v)));
-  side.appendChild(controls);
+  // CENTER: phone
+  const center=el('div','ig-center');
+  const phone=el('div','phone ig-phone');phone.innerHTML='<div class="notch"></div>';
+  const screen=el('div','screen ig-screen');
+  const frame=el('iframe','ig-frame');frame.id='igFrame';frame.setAttribute('title','profile preview');
+  screen.appendChild(frame);phone.appendChild(screen);center.appendChild(phone);
+  grid.appendChild(center);
 
-  // challenge checklist
-  const chk=el('div','glass card');chk.innerHTML='<div class="eyebrow">Styling goals</div>';
-  const list=el('div','checklist');
-  S2CHALLENGES.forEach(ch=>{const done=ch.test(css);
-    list.appendChild(el('div','check-item'+(done?' done':''),`<span class="box">${done?'✓':''}</span> ${ch.label}`));});
-  chk.appendChild(list);side.appendChild(chk);
+  // RIGHT: code (tabs) + tests
+  const right=el('div','ig-right');
+  const codeCard=el('div','glass card');
+  codeCard.innerHTML='<div class="code-tabs">'
+    +'<span class="ctab" data-tab="html">HTML</span>'
+    +'<span class="ctab active" data-tab="css">CSS</span>'
+    +'<span class="ctab locked" data-tab="js">JS 🔒</span></div>';
+  const ed=el('textarea','web-editor code'); ed.id='igEd'; ed.spellcheck=false;
+  ed.setAttribute('autocapitalize','off');ed.setAttribute('autocorrect','off');ed.setAttribute('autocomplete','off');
+  ed.value=state.web.igCode[state.web.igTab]||'';
+  codeCard.appendChild(ed);
+  const btns=el('div','lvl-btns');
+  const runB=el('button','btn cyan sm','▶ Run');const chkB=el('button','btn gold sm','✓ Check');const clrB=el('button','btn ghost sm','↺ Clear CSS');
+  btns.appendChild(runB);btns.appendChild(chkB);btns.appendChild(clrB);codeCard.appendChild(btns);
+  right.appendChild(codeCard);
 
-  if(state.web.s2done){
-    const done=el('div','glass card center');
-    done.innerHTML=`<div style="font-size:44px">✔</div><h2 style="color:var(--ok)">Beautiful!</h2>
-      <p class="muted" style="font-weight:600">You styled a webpage with CSS. Now let's make it interactive.</p>`;
-    const btn=el('button','btn cyan','Unlock Stage 3 · JavaScript ⚡');btn.onclick=()=>{Audio_.click();state.web.stage=3;render();};
-    done.appendChild(btn);side.appendChild(done);
-  }
-  layout.appendChild(side);box.appendChild(layout);
+  const testCard=el('div','glass card');
+  testCard.innerHTML='<div class="eyebrow">Test cases</div>';
+  const tlist=el('div','test-list');tlist.id='igTests';
+  IG_CSS_TESTS.forEach(function(t){tlist.appendChild(el('div','test-item','<span class="tbox">•</span> '+esc(t.name)));});
+  testCard.appendChild(tlist);
+  const nextWrap=el('div');nextWrap.id='igNext';nextWrap.style.marginTop='10px';testCard.appendChild(nextWrap);
+  right.appendChild(testCard);
+  grid.appendChild(right);
+
+  box.appendChild(grid);
+
+  // tab switching
+  const tabs=codeCard.querySelectorAll('.ctab');
+  [].forEach.call(tabs,function(t){ t.onclick=function(){ if(t.classList.contains('locked'))return; [].forEach.call(tabs,function(x){x.classList.remove('active');}); t.classList.add('active'); state.web.igTab=t.getAttribute('data-tab'); ed.value=state.web.igCode[state.web.igTab]||''; ed.focus(); }; });
+
+  // wiring
+  let tmr;
+  ed.addEventListener('input',function(){ state.web.igCode[state.web.igTab]=ed.value; clearTimeout(tmr); tmr=setTimeout(function(){igPreview(false);igCssSyncActive();},250); });
+  ed.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart;e.target.value=e.target.value.slice(0,s)+'  '+e.target.value.slice(e.target.selectionEnd);e.target.selectionStart=e.target.selectionEnd=s+2;}});
+  runB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(false);};
+  chkB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(true);};
+  clrB.onclick=function(){Audio_.click();state.web.igCode.css='';if(state.web.igTab==='css')ed.value='';[].forEach.call(document.querySelectorAll('.ig-pieces .style-opt'),function(o){o.classList.remove('active');});document.getElementById('igNext').innerHTML='';[].forEach.call(document.querySelectorAll('#igTests .test-item'),function(it){it.className='test-item';it.querySelector('.tbox').textContent='•';});igPreview(false);ed.focus();};
+  setTimeout(function(){igCssSyncActive();igPreview(false); if(state.web.s2done)igStage2Pass();},40);
   return box;
-}
-function afterStyle(){
-  const allDone=S2CHALLENGES.every(c=>c.test(state.web.css));
-  if(allDone&&!state.web.s2done){state.web.s2done=true;state.xp+=120;Audio_.win();Confetti.celebrate();toast('🎉 +120 XP · Styling complete!');}
-  render();
 }
 
 /* ---------- STAGE 3 : JAVASCRIPT PROJECT (inputs -> live profile) ---------- */
