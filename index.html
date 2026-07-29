@@ -281,7 +281,8 @@ html[data-theme="light"] .phone .notch{background:#241a4d}
 .palette{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .chip-el{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:12px;cursor:grab;touch-action:none;user-select:none;text-align:center;transition:transform .15s var(--ease),border-color .2s}
 .chip-el:hover{transform:translateY(-2px);border-color:var(--cyan)}
-.chip-el.used{opacity:.45;pointer-events:none}
+.chip-el.used{opacity:.45;pointer-events:none;position:relative}
+.chip-el.used::after{content:"✓ added";position:absolute;top:6px;right:8px;font-size:.62rem;font-weight:800;color:var(--ok)}
 .chip-el .ce-ic{font-size:26px}
 .chip-el .ce-name{font-family:var(--font-display);font-weight:800;font-size:.82rem;margin-top:3px}
 .chip-el .ce-tag{font-family:ui-monospace,monospace;font-size:.68rem;color:var(--cyan);margin-top:2px}
@@ -1679,14 +1680,53 @@ function igPreview(check){
 /* ===== STAGE 1 : HTML (editable code + pieces insert + live phone + tests) ===== */
 const IG_HTML_PIECES=[
   {id:'img',icon:'🖼️',name:'Profile Picture',tag:'<img>',photo:true,cls:'avatar',uploadName:'myprofile.png',alt:'profile'},
-  {id:'h1',icon:'🔤',name:'Username',tag:'<h1>',snip:'<h1>your_name</h1>\n'},
-  {id:'bio',icon:'📝',name:'Bio',tag:'<p>',snip:'<p>✨ Learning to code | Building cool things</p>\n'},
-  {id:'followers',icon:'👥',name:'Followers',tag:'<div>',snip:'<div>1,240 followers</div>\n'},
-  {id:'following',icon:'➕',name:'Following',tag:'<div>',snip:'<div>340 following</div>\n'},
-  {id:'posts',icon:'🔲',name:'Posts',tag:'<div>',snip:'<div>87 posts</div>\n'},
+  {id:'h1',icon:'🔤',name:'Username',tag:'<h1>',snip:'<h1 class="username">your_name</h1>\n'},
+  {id:'bio',icon:'📝',name:'Bio',tag:'<p>',snip:'<p class="bio">✨ Learning to code | Building cool things</p>\n'},
+  {id:'followers',icon:'👥',name:'Followers',tag:'<div>',snip:'<div class="followers">1,240 followers</div>\n'},
+  {id:'following',icon:'➕',name:'Following',tag:'<div>',snip:'<div class="following">340 following</div>\n'},
+  {id:'posts',icon:'🔲',name:'Posts',tag:'<div>',snip:'<div class="posts">87 posts</div>\n'},
   {id:'post',icon:'📷',name:'Post Photo',tag:'<img>',photo:true,cls:'post',uploadName:'mypost.png',alt:'post'},
-  {id:'btn',icon:'🔘',name:'Follow Button',tag:'<button>',snip:'<button>Follow</button>\n'}
+  {id:'btn',icon:'🔘',name:'Follow Button',tag:'<button>',snip:'<button class="follow-btn">Follow</button>\n'}
 ];
+/* fixed canonical order + presence detection for one-time pieces */
+const IG_ORDER=['img','h1','bio','followers','following','posts','post','btn'];
+const IG_MATCH={
+  img:/class\s*=\s*["'][^"']*\bavatar\b/i,
+  h1:/class\s*=\s*["'][^"']*\busername\b/i,
+  bio:/class\s*=\s*["'][^"']*\bbio\b/i,
+  followers:/class\s*=\s*["'][^"']*\bfollowers\b/i,
+  following:/class\s*=\s*["'][^"']*\bfollowing\b/i,
+  posts:/class\s*=\s*["'][^"']*\bposts\b/i,
+  post:/class\s*=\s*["'][^"']*\bpost\b/i,
+  btn:/<button\b/i
+};
+function igParse(code){
+  const lines=(code||'').split('\n');const map={},other=[];
+  lines.forEach(function(ln){ if(ln.trim()===''){return;} let hit=null;
+    for(var i=0;i<IG_ORDER.length;i++){var id=IG_ORDER[i];if(IG_MATCH[id].test(ln)){hit=id;break;}}
+    if(hit&&!map[hit])map[hit]=ln; else other.push(ln); });
+  return {map:map,other:other};
+}
+/* add/replace a piece line, keeping pieces in canonical order (avatar always first) */
+function igApplyPiece(id,line){
+  ensureIGCode();
+  const p=igParse(state.web.igCode.html);
+  p.map[id]=(line||'').replace(/\n+$/,'');
+  const ordered=IG_ORDER.filter(function(k){return p.map[k];}).map(function(k){return p.map[k];});
+  const code=ordered.concat(p.other).join('\n')+'\n';
+  state.web.igCode.html=code;
+  const e=document.getElementById('igEd'); if(e)e.value=code;
+  Audio_.pick&&Audio_.pick();
+  igUpdateChips(); igPreview(false);
+}
+/* grey-out chips whose element is already present; re-enable those that aren't */
+function igUpdateChips(){
+  const code=(state.web.igCode&&state.web.igCode.html)||'';
+  IG_HTML_PIECES.forEach(function(item){
+    const chip=document.querySelector('.ig-pieces .chip-el[data-id="'+item.id+'"]'); if(!chip)return;
+    chip.classList.toggle('used', IG_MATCH[item.id]?IG_MATCH[item.id].test(code):false);
+  });
+}
 function igRandomPhotoSnip(item){ const n=1+Math.floor(Math.random()*IG_PHOTOS.length); const cls=(item&&item.cls)?' class="'+item.cls+'"':''; const alt=(item&&item.alt)||'photo'; return '<img'+cls+' src="photo'+n+'.png" alt="'+alt+'">\n'; }
 function igInsertSnip(sn){ igInsertHTML(sn); }
 /* click a photo piece → offer upload; if a file is chosen use it, otherwise a random default */
@@ -1698,11 +1738,11 @@ function igPhotoUploadOrRandom(item){
   inp.onchange=function(){
     const f=inp.files&&inp.files[0]; if(!f)return; chosen=true;
     const r=new FileReader();
-    r.onload=function(){ state.web.igUploads[item.uploadName]=r.result; igInsertHTML('<img'+cls+' src="'+item.uploadName+'" alt="'+item.alt+'">\n'); toast('📷 Your photo was added!'); };
-    r.onerror=function(){ igInsertHTML(igRandomPhotoSnip(item)); };
+    r.onload=function(){ state.web.igUploads[item.uploadName]=r.result; igApplyPiece(item.id,'<img'+cls+' src="'+item.uploadName+'" alt="'+item.alt+'">'); toast('📷 Your photo was added!'); };
+    r.onerror=function(){ igApplyPiece(item.id, igRandomPhotoSnip(item)); };
     r.readAsDataURL(f);
   };
-  const onFocus=function(){ window.removeEventListener('focus',onFocus); setTimeout(function(){ if(!chosen) igInsertHTML(igRandomPhotoSnip(item)); },400); };
+  const onFocus=function(){ window.removeEventListener('focus',onFocus); setTimeout(function(){ if(!chosen) igApplyPiece(item.id, igRandomPhotoSnip(item)); },400); };
   window.addEventListener('focus',onFocus);
   inp.click();
 }
@@ -1747,13 +1787,14 @@ function webStage1(){
   const pal=el('div','palette');
   IG_HTML_PIECES.forEach(function(item){
     const chip=el('div','chip-el');
+    chip.setAttribute('data-id',item.id);
     chip.innerHTML='<div class="ce-ic">'+item.icon+'</div><div class="ce-name">'+item.name+'</div><div class="ce-tag">'+esc(item.tag)+'</div>';
     if(item.photo){
-      chip.addEventListener('click',function(){igPhotoUploadOrRandom(item);});
-      enableDrag(chip,{onDrop:function(){igInsertHTML(igRandomPhotoSnip(item));}});
+      chip.addEventListener('click',function(){ if(chip.classList.contains('used'))return; igPhotoUploadOrRandom(item); });
+      enableDrag(chip,{onDrop:function(){ if(chip.classList.contains('used'))return; igApplyPiece(item.id, igRandomPhotoSnip(item)); }});
     }else{
-      chip.addEventListener('click',function(){igInsertHTML(item.snip);});
-      enableDrag(chip,{onDrop:function(){igInsertHTML(item.snip);}});
+      chip.addEventListener('click',function(){ if(chip.classList.contains('used'))return; igApplyPiece(item.id, item.snip); });
+      enableDrag(chip,{onDrop:function(){ if(chip.classList.contains('used'))return; igApplyPiece(item.id, item.snip); }});
     }
     pal.appendChild(chip);
   });
@@ -1782,7 +1823,8 @@ function webStage1(){
   const btns=el('div','lvl-btns');
   const runB=el('button','btn cyan sm','▶ Run');
   const chkB=el('button','btn gold sm','✓ Check');
-  btns.appendChild(runB);btns.appendChild(chkB);codeCard.appendChild(btns);
+  const clrB=el('button','btn ghost sm','↺ Clear');
+  btns.appendChild(runB);btns.appendChild(chkB);btns.appendChild(clrB);codeCard.appendChild(btns);
   right.appendChild(codeCard);
 
   const testCard=el('div','glass card');
@@ -1798,11 +1840,12 @@ function webStage1(){
 
   // wiring
   let tmr;
-  ed.addEventListener('input',function(){state.web.igCode.html=ed.value;clearTimeout(tmr);tmr=setTimeout(function(){igPreview(false);},250);});
+  ed.addEventListener('input',function(){state.web.igCode.html=ed.value;igUpdateChips();clearTimeout(tmr);tmr=setTimeout(function(){igPreview(false);},250);});
   ed.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart;e.target.value=e.target.value.slice(0,s)+'  '+e.target.value.slice(e.target.selectionEnd);e.target.selectionStart=e.target.selectionEnd=s+2;}});
   runB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(false);};
   chkB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(true);};
-  setTimeout(function(){igPreview(false); if(state.web.s1done)igStage1Pass();},40);
+  clrB.onclick=function(){Audio_.click();state.web.igCode.html='';state.web.igUploads={};ed.value='';document.getElementById('igNext').innerHTML='';[].forEach.call(document.querySelectorAll('#igTests .test-item'),function(it){it.className='test-item';it.querySelector('.tbox').textContent='•';});igUpdateChips();igPreview(false);ed.focus();};
+  setTimeout(function(){igUpdateChips();igPreview(false); if(state.web.s1done)igStage1Pass();},40);
   return box;
 }
 function placePiece(item){
