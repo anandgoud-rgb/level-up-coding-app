@@ -407,6 +407,19 @@ html[data-theme="light"] .phone .notch{background:#241a4d}
 .test-item.fail{background:rgba(255,90,90,.12);border-color:rgba(255,90,90,.45)}
 .test-item.fail .tbox{background:#ff5a5a;color:#fff}
 .pass-banner{font-weight:800;color:#1ea55a;margin-bottom:10px}
+/* ===== Redesigned IG builder (3-column: pieces | phone | code+tests) ===== */
+.ig-build{display:grid;grid-template-columns:250px 1fr 430px;gap:20px;align-items:start;margin-top:14px;width:94vw;max-width:1340px;position:relative;left:50%;transform:translateX(-50%)}
+@media(max-width:1080px){.ig-build{grid-template-columns:1fr;width:auto;left:auto;transform:none}.ig-center{order:-1}}
+.ig-pieces .palette{grid-template-columns:1fr 1fr;margin-top:2px}
+.ig-center{display:flex;justify-content:center;position:sticky;top:14px}
+.ig-phone{width:100%;max-width:330px}
+.ig-screen{padding:30px 0 0;display:block}
+.ig-frame{width:100%;height:100%;border:0;background:#fff;display:block}
+.ig-right{display:flex;flex-direction:column;gap:14px}
+.code-tabs{display:flex;gap:6px;margin-bottom:10px}
+.ctab{flex:1;padding:8px;border:1px solid var(--border);background:var(--surface);border-radius:10px 10px 0 0;font-family:var(--font-display);font-weight:800;font-size:.82rem;color:var(--muted);cursor:pointer}
+.ctab.active{background:var(--code-bg);color:#fff;border-color:var(--code-bg)}
+.ctab:disabled{opacity:.4;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -1636,52 +1649,160 @@ function stage1Phone(){
   inner.innerHTML=html;ig.appendChild(inner);screen.appendChild(ig);phone.appendChild(screen);
   return phone;
 }
+/* ===== IG BUILDER (redesigned): shared helpers ===== */
+const IG_PHOTOS=["data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22400%22%20height%3D%22400%22%20viewBox%3D%220%200%20400%20400%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffb56b%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff6a9c%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22url%28%23g%29%22/%3E%3Ccircle%20cx%3D%22200%22%20cy%3D%22230%22%20r%3D%2270%22%20fill%3D%22%23fff2c9%22%20opacity%3D%220.95%22/%3E%3Cpath%20d%3D%22M0%20300%20Q100%20250%20200%20300%20T400%20300%20V400%20H0%20Z%22%20fill%3D%22%237a3b6b%22/%3E%3Cpath%20d%3D%22M0%20340%20Q120%20300%20220%20340%20T400%20335%20V400%20H0%20Z%22%20fill%3D%22%23552a4d%22/%3E%3C/svg%3E","data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22400%22%20height%3D%22400%22%20viewBox%3D%220%200%20400%20400%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%238fd3ff%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23d7f0ff%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22url%28%23g%29%22/%3E%3Ccircle%20cx%3D%22320%22%20cy%3D%2280%22%20r%3D%2234%22%20fill%3D%22%23fff6d6%22/%3E%3Cpath%20d%3D%22M0%20400%20L130%20180%20L230%20400%20Z%22%20fill%3D%22%235b7c9d%22/%3E%3Cpath%20d%3D%22M120%20400%20L270%20140%20L400%20400%20Z%22%20fill%3D%22%2341607e%22/%3E%3Cpath%20d%3D%22M240%20210%20L270%20140%20L305%20210%20Z%22%20fill%3D%22%23fff%22/%3E%3Cpath%20d%3D%22M96%20232%20L130%20180%20L166%20232%20Z%22%20fill%3D%22%23fff%22/%3E%3C/svg%3E","data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22400%22%20height%3D%22400%22%20viewBox%3D%220%200%20400%20400%22%3E%3Crect%20width%3D%22400%22%20height%3D%22220%22%20fill%3D%22%237ec8f0%22/%3E%3Ccircle%20cx%3D%2280%22%20cy%3D%2270%22%20r%3D%2230%22%20fill%3D%22%23fff3b0%22/%3E%3Crect%20y%3D%22220%22%20width%3D%22400%22%20height%3D%2290%22%20fill%3D%22%232f9fd6%22/%3E%3Crect%20y%3D%22300%22%20width%3D%22400%22%20height%3D%22100%22%20fill%3D%22%23f2d79b%22/%3E%3Cpath%20d%3D%22M0%20300%20Q100%20285%20200%20300%20T400%20300%20V320%20H0%20Z%22%20fill%3D%22%23e6c483%22/%3E%3C/svg%3E","data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22400%22%20height%3D%22400%22%20viewBox%3D%220%200%20400%20400%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%232a2a5e%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%235b5b9e%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22url%28%23g%29%22/%3E%3Ccircle%20cx%3D%22320%22%20cy%3D%2270%22%20r%3D%2226%22%20fill%3D%22%23ffe9a8%22/%3E%3Cg%20fill%3D%22%231e1e44%22%3E%3Crect%20x%3D%2240%22%20y%3D%22200%22%20width%3D%2260%22%20height%3D%22200%22/%3E%3Crect%20x%3D%22120%22%20y%3D%22150%22%20width%3D%2260%22%20height%3D%22250%22/%3E%3Crect%20x%3D%22200%22%20y%3D%22230%22%20width%3D%2255%22%20height%3D%22170%22/%3E%3Crect%20x%3D%22270%22%20y%3D%22170%22%20width%3D%2265%22%20height%3D%22230%22/%3E%3C/g%3E%3Cg%20fill%3D%22%23ffd76a%22%3E%3Crect%20x%3D%2255%22%20y%3D%22220%22%20width%3D%2212%22%20height%3D%2214%22/%3E%3Crect%20x%3D%2280%22%20y%3D%22220%22%20width%3D%2212%22%20height%3D%2214%22/%3E%3Crect%20x%3D%22135%22%20y%3D%22175%22%20width%3D%2212%22%20height%3D%2214%22/%3E%3Crect%20x%3D%22160%22%20y%3D%22175%22%20width%3D%2212%22%20height%3D%2214%22/%3E%3Crect%20x%3D%22285%22%20y%3D%22195%22%20width%3D%2212%22%20height%3D%2214%22/%3E%3Crect%20x%3D%22310%22%20y%3D%22195%22%20width%3D%2212%22%20height%3D%2214%22/%3E%3C/g%3E%3C/svg%3E","data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22400%22%20height%3D%22400%22%20viewBox%3D%220%200%20400%20400%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23cfeebb%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%237bbf6a%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22url%28%23g%29%22/%3E%3Ccircle%20cx%3D%22315%22%20cy%3D%2275%22%20r%3D%2230%22%20fill%3D%22%23fff6cf%22/%3E%3Cg%20fill%3D%22%232f7d4f%22%3E%3Cpath%20d%3D%22M90%20300%20L130%20170%20L170%20300%20Z%22/%3E%3Cpath%20d%3D%22M75%20340%20L130%20220%20L185%20340%20Z%22/%3E%3Cpath%20d%3D%22M230%20310%20L275%20160%20L320%20310%20Z%22/%3E%3Cpath%20d%3D%22M215%20350%20L275%20210%20L335%20350%20Z%22/%3E%3C/g%3E%3Crect%20x%3D%22122%22%20y%3D%22300%22%20width%3D%2216%22%20height%3D%2240%22%20fill%3D%22%237a4a25%22/%3E%3Crect%20x%3D%22267%22%20y%3D%22310%22%20width%3D%2216%22%20height%3D%2242%22%20fill%3D%22%237a4a25%22/%3E%3C/svg%3E"];
+function ensureIGCode(){ if(!state.web.igCode)state.web.igCode={html:'',css:'',js:''}; if(!state.web.igUploads)state.web.igUploads={}; }
+function igSwapImages(str){
+  var h=str||'';
+  const up=state.web.igUploads||{};
+  Object.keys(up).forEach(function(k){ h=h.split(k).join(up[k]); });
+  for(var i=0;i<IG_PHOTOS.length;i++){ h=h.split('photo'+(i+1)+'.png').join(IG_PHOTOS[i]); }
+  h=h.split('woman.png').join(IMG_WOMAN).split('man.png').join(IMG_MAN);
+  return h;
+}
+function igSrcdoc(){
+  const c=state.web.igCode||{html:'',css:'',js:''};
+  var html=igSwapImages(c.html||'');
+  var base="*{box-sizing:border-box}body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:#14171a;background:#fff;padding:16px;line-height:1.5}img{max-width:100%}.avatar{width:90px;height:90px;border-radius:50%;object-fit:cover;display:block}.post{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;display:block;margin-top:6px}";
+  return '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+base+'</style><style>'+(c.css||'')+'</style></head><body>'+html+
+    '<scr'+'ipt>window.onerror=function(){return true;};try{(function(){var M='+JSON.stringify(IMG_MAN)+',W='+JSON.stringify(IMG_WOMAN)+';[].forEach.call(document.querySelectorAll("img"),function(im){var s=im.getAttribute("src")||"";im.setAttribute("data-name",s);if(/woman\.png$/i.test(s))im.src=W;else if(/man\.png$/i.test(s))im.src=M;});})();}catch(e){}</scr'+'ipt>'+
+    '<scr'+'ipt>try{'+(c.js||'')+'}catch(e){}</scr'+'ipt>'+
+    '</body></html>';
+}
+function igPreview(check){
+  const f=document.getElementById('igFrame'); if(!f)return;
+  f._check=check;
+  f.onload=function(){ if(f._check){f._check=false; if(typeof igRunTests==='function')igRunTests(); } };
+  f.srcdoc=igSrcdoc()+'<!--'+Date.now()+'-->';
+}
+
+/* ===== STAGE 1 : HTML (editable code + pieces insert + live phone + tests) ===== */
+const IG_HTML_PIECES=[
+  {id:'img',icon:'🖼️',name:'Profile Picture',tag:'<img>',photo:true,cls:'avatar',uploadName:'myprofile.png',alt:'profile'},
+  {id:'h1',icon:'🔤',name:'Username',tag:'<h1>',snip:'<h1>your_name</h1>\n'},
+  {id:'bio',icon:'📝',name:'Bio',tag:'<p>',snip:'<p>✨ Learning to code | Building cool things</p>\n'},
+  {id:'followers',icon:'👥',name:'Followers',tag:'<div>',snip:'<div>1,240 followers</div>\n'},
+  {id:'following',icon:'➕',name:'Following',tag:'<div>',snip:'<div>340 following</div>\n'},
+  {id:'posts',icon:'🔲',name:'Posts',tag:'<div>',snip:'<div>87 posts</div>\n'},
+  {id:'post',icon:'📷',name:'Post Photo',tag:'<img>',photo:true,cls:'post',uploadName:'mypost.png',alt:'post'},
+  {id:'btn',icon:'🔘',name:'Follow Button',tag:'<button>',snip:'<button>Follow</button>\n'}
+];
+function igRandomPhotoSnip(item){ const n=1+Math.floor(Math.random()*IG_PHOTOS.length); const cls=(item&&item.cls)?' class="'+item.cls+'"':''; const alt=(item&&item.alt)||'photo'; return '<img'+cls+' src="photo'+n+'.png" alt="'+alt+'">\n'; }
+function igInsertSnip(sn){ igInsertHTML(sn); }
+/* click a photo piece → offer upload; if a file is chosen use it, otherwise a random default */
+function igPhotoUploadOrRandom(item){
+  ensureIGCode();
+  let chosen=false;
+  const cls=(item.cls)?' class="'+item.cls+'"':'';
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=function(){
+    const f=inp.files&&inp.files[0]; if(!f)return; chosen=true;
+    const r=new FileReader();
+    r.onload=function(){ state.web.igUploads[item.uploadName]=r.result; igInsertHTML('<img'+cls+' src="'+item.uploadName+'" alt="'+item.alt+'">\n'); toast('📷 Your photo was added!'); };
+    r.onerror=function(){ igInsertHTML(igRandomPhotoSnip(item)); };
+    r.readAsDataURL(f);
+  };
+  const onFocus=function(){ window.removeEventListener('focus',onFocus); setTimeout(function(){ if(!chosen) igInsertHTML(igRandomPhotoSnip(item)); },400); };
+  window.addEventListener('focus',onFocus);
+  inp.click();
+}
+const IG_HTML_TESTS=[
+  {name:'Has a profile image (<img>)',fn:d=>!!(d&&d.querySelector('img'))},
+  {name:'Has a username (<h1> with text)',fn:d=>{const h=d&&d.querySelector('h1');return !!h&&h.textContent.trim().length>0;}},
+  {name:'Has a bio (<p> with text)',fn:d=>{const p=d&&d.querySelector('p');return !!p&&p.textContent.trim().length>0;}},
+  {name:'Has followers, following & posts (3 <div>)',fn:d=>!!d&&d.querySelectorAll('div').length>=3},
+  {name:'Has a Follow button',fn:d=>{const b=d&&d.querySelector('button');return !!b&&b.textContent.trim().length>0;}}
+];
+function igInsertHTML(snip){
+  const e=document.getElementById('igEd'); if(!e)return;
+  const s=(e.selectionStart!=null)?e.selectionStart:e.value.length;
+  e.value=e.value.slice(0,s)+snip+e.value.slice(s);
+  state.web.igCode.html=e.value; e.focus(); e.selectionStart=e.selectionEnd=s+snip.length;
+  Audio_.pick&&Audio_.pick(); igPreview(false);
+}
+function igRunTests(){
+  const f=document.getElementById('igFrame'); let doc=null; try{doc=f.contentDocument||f.contentWindow.document;}catch(e){}
+  const tlist=document.getElementById('igTests'); if(!tlist)return; let all=true;
+  IG_HTML_TESTS.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(doc);}catch(e){ok=false;} if(!ok)all=false;
+    const it=tlist.children[i]; if(it){it.className='test-item '+(ok?'pass':'fail'); const bx=it.querySelector('.tbox'); if(bx)bx.textContent=ok?'✓':'✗';} });
+  if(all)igStage1Pass(); else {Audio_.wrong&&Audio_.wrong();toast('Some tests are still failing — keep building!');}
+}
+function igStage1Pass(){
+  const first=!state.web.s1done;
+  if(first){state.web.s1done=true;state.xp+=100;}
+  Audio_.win&&Audio_.win();Confetti.celebrate&&Confetti.celebrate();
+  const wrap=document.getElementById('igNext'); if(wrap){wrap.innerHTML='';
+    wrap.appendChild(el('div','pass-banner','✅ Structure complete! Your HTML is ready.'));
+    const b=el('button','btn cyan','Unlock Stage 2 · CSS 🎨'); b.onclick=function(){Audio_.click();state.web.stage=2;render();}; wrap.appendChild(b);}
+}
 function webStage1(){
+  ensureIGCode();
   const box=el('div');
-  box.appendChild(learnBanner('🧱','HTML creates the structure — the skeleton of every webpage.'));
-  const layout=el('div','stage-layout');
-  layout.appendChild(stage1Phone());
+  box.appendChild(learnBanner('🧱','HTML creates the structure — the skeleton of your Instagram profile.'));
+  const grid=el('div','ig-build');
 
-  const side=el('div','side');
-  side.appendChild(el('div','glass card',`<div class="eyebrow">Stage 1 · HTML Builder</div>
-    <div style="font-family:var(--font-display);font-weight:800;font-size:1.05rem">Drag each piece onto the phone 📱</div>
-    <div class="muted" style="font-weight:600;font-size:.85rem;margin-top:4px">Each block is a real HTML element. Build all 7 to finish the structure.</div>`));
-
-  // palette
+  // LEFT: pieces
+  const left=el('div','ig-pieces glass card');
+  left.innerHTML='<div class="eyebrow">Building blocks</div><div class="muted" style="font-weight:600;font-size:.82rem;margin:4px 0 10px">Tap a piece to add it. For photos, tap to upload your own — or drag for a random one 📷</div>';
   const pal=el('div','palette');
-  S1REQ.forEach(item=>{
-    const chip=el('div','chip-el'+(state.web.built[item.id]?' used':''));
-    chip.innerHTML=`<div class="ce-ic">${item.icon}</div><div class="ce-name">${item.name}</div><div class="ce-tag">${esc(item.tag)}</div>`;
-    if(!state.web.built[item.id]){
-      enableDrag(chip,{onDrop(target){
-        if(target&&target.closest('.phone.dropzone')) placePiece(item);
-        else toast('Drop it on the phone screen 📱');
-      }});
-      chip.addEventListener('click',()=>{if(chip._sup)return;placePiece(item);}); // tap fallback
+  IG_HTML_PIECES.forEach(function(item){
+    const chip=el('div','chip-el');
+    chip.innerHTML='<div class="ce-ic">'+item.icon+'</div><div class="ce-name">'+item.name+'</div><div class="ce-tag">'+esc(item.tag)+'</div>';
+    if(item.photo){
+      chip.addEventListener('click',function(){igPhotoUploadOrRandom(item);});
+      enableDrag(chip,{onDrop:function(){igInsertHTML(igRandomPhotoSnip(item));}});
+    }else{
+      chip.addEventListener('click',function(){igInsertHTML(item.snip);});
+      enableDrag(chip,{onDrop:function(){igInsertHTML(item.snip);}});
     }
     pal.appendChild(chip);
   });
-  side.appendChild(pal);
+  left.appendChild(pal);
+  grid.appendChild(left);
 
-  // checklist
-  const chk=el('div','glass card');
-  chk.innerHTML='<div class="eyebrow">Checklist</div>';
-  const list=el('div','checklist');
-  S1REQ.forEach(item=>{
-    const done=!!state.web.built[item.id];
-    list.appendChild(el('div','check-item'+(done?' done':''),`<span class="box">${done?'✓':''}</span> Add ${item.name}`));
-  });
-  chk.appendChild(list);side.appendChild(chk);
+  // CENTER: phone with live iframe
+  const center=el('div','ig-center');
+  const phone=el('div','phone ig-phone');phone.innerHTML='<div class="notch"></div>';
+  const screen=el('div','screen ig-screen');
+  const frame=el('iframe','ig-frame');frame.id='igFrame';frame.setAttribute('title','profile preview');
+  screen.appendChild(frame);phone.appendChild(screen);center.appendChild(phone);
+  grid.appendChild(center);
 
-  // completion / continue
-  if(state.web.s1done){
-    const done=el('div','glass card center');
-    done.innerHTML=`<div style="font-size:44px">✔</div><h2 style="color:var(--ok)">Structure Complete!</h2>
-      <p class="muted" style="font-weight:600">You built a full webpage skeleton with HTML. Time to make it beautiful.</p>`;
-    const btn=el('button','btn cyan','Unlock Stage 2 · CSS 🎨');btn.onclick=()=>{Audio_.click();state.web.stage=2;render();};
-    done.appendChild(btn);side.appendChild(done);
-  }
-  layout.appendChild(side);box.appendChild(layout);
+  // RIGHT: code (tabs + editor + buttons) then tests
+  const right=el('div','ig-right');
+  const codeCard=el('div','glass card');
+  codeCard.innerHTML='<div class="code-tabs">'
+    +'<button class="ctab active">HTML</button>'
+    +'<button class="ctab" disabled>CSS</button>'
+    +'<button class="ctab" disabled>JS</button></div>';
+  const ed=el('textarea','web-editor code');ed.id='igEd';ed.spellcheck=false;
+  ed.setAttribute('autocapitalize','off');ed.setAttribute('autocomplete','off');ed.setAttribute('autocorrect','off');
+  ed.value=state.web.igCode.html||'';
+  codeCard.appendChild(ed);
+  const btns=el('div','lvl-btns');
+  const runB=el('button','btn cyan sm','▶ Run');
+  const chkB=el('button','btn gold sm','✓ Check');
+  btns.appendChild(runB);btns.appendChild(chkB);codeCard.appendChild(btns);
+  right.appendChild(codeCard);
+
+  const testCard=el('div','glass card');
+  testCard.innerHTML='<div class="eyebrow">Test cases</div>';
+  const tlist=el('div','test-list');tlist.id='igTests';
+  IG_HTML_TESTS.forEach(function(t){tlist.appendChild(el('div','test-item','<span class="tbox">•</span> '+esc(t.name)));});
+  testCard.appendChild(tlist);
+  const nextWrap=el('div');nextWrap.id='igNext';nextWrap.style.marginTop='10px';testCard.appendChild(nextWrap);
+  right.appendChild(testCard);
+  grid.appendChild(right);
+
+  box.appendChild(grid);
+
+  // wiring
+  let tmr;
+  ed.addEventListener('input',function(){state.web.igCode.html=ed.value;clearTimeout(tmr);tmr=setTimeout(function(){igPreview(false);},250);});
+  ed.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart;e.target.value=e.target.value.slice(0,s)+'  '+e.target.value.slice(e.target.selectionEnd);e.target.selectionStart=e.target.selectionEnd=s+2;}});
+  runB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(false);};
+  chkB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(true);};
+  setTimeout(function(){igPreview(false); if(state.web.s1done)igStage1Pass();},40);
   return box;
 }
 function placePiece(item){
