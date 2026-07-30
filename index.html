@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --font-display:'Baloo 2','Trebuchet MS',system-ui,sans-serif;
@@ -2149,6 +2150,72 @@ function webStage3(){
   return box;
 }
 
+function scopeCssToPhone(css){
+  css=(css||'').replace(/\/\*[\s\S]*?\*\//g,'');
+  return css.replace(/([^{}]+)\{([^}]*)\}/g,function(m,sels,body){
+    var out=sels.split(',').map(function(s){s=s.trim();if(!s)return s;
+      if(/^body\b/i.test(s))return s.replace(/^body/i,'#certPhoneBody');
+      return '#certPhoneBody '+s;}).join(',');
+    return out+'{'+body+'}';
+  });
+}
+function downloadIGCertificate(){
+  ensureIGCode();
+  if(!window.html2canvas){ toast('Still loading… try again in a moment'); return; }
+  const W=820;
+  const sheet=el('div');
+  sheet.style.cssText='position:fixed;left:-99999px;top:0;width:'+W+'px;background:#fff;font-family:Nunito,system-ui,sans-serif;box-sizing:border-box';
+  sheet.innerHTML=
+    '<div style="display:flex;align-items:center;gap:12px;padding:30px 44px 0">'
+      +'<img src="'+SUNSTONE_LOGO+'" style="height:46px" crossorigin="anonymous">'
+    +'</div>'
+    +'<div style="height:4px;background:#C9A24B;margin:16px 44px 0"></div>'
+    +'<div style="text-align:center;padding:24px 44px 0">'
+      +'<div style="letter-spacing:4px;color:#C9A24B;font-weight:800;font-size:14px">CERTIFICATE OF COMPLETION</div>'
+      +'<div style="font-family:\'Baloo 2\',Nunito,sans-serif;color:#27396B;margin:14px 0 4px;font-size:34px;font-weight:800">Congratulations, '+esc(state.name||'')+'!</div>'
+      +'<div style="color:#55617a;font-weight:700;font-size:15px">You built a real Instagram profile with HTML, CSS &amp; JavaScript.</div>'
+      +'<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;color:#39406b;font-weight:700;font-size:12px">'
+        +'<span style="border:1px solid #e3e6ef;border-radius:20px;padding:6px 13px">🧱 HTML structure</span>'
+        +'<span style="border:1px solid #e3e6ef;border-radius:20px;padding:6px 13px">🎨 CSS styling</span>'
+        +'<span style="border:1px solid #e3e6ef;border-radius:20px;padding:6px 13px">⚡ JS interaction</span>'
+      +'</div>'
+    +'</div>';
+  const phoneWrap=el('div'); phoneWrap.style.cssText='display:flex;justify-content:center;margin:24px 0 0';
+  const phone=el('div'); phone.style.cssText='width:280px;border:10px solid #0c0a1c;border-radius:36px;overflow:hidden;background:#fff';
+  const body=el('div'); body.id='certPhoneBody'; body.style.cssText='padding:16px;min-height:500px;background:#fff';
+  body.innerHTML=igSwapImages(state.web.igCode.html||'');
+  phone.appendChild(body); phoneWrap.appendChild(phone); sheet.appendChild(phoneWrap);
+  const baseCss='#certPhoneBody{color:#14171a;line-height:1.5}#certPhoneBody *{box-sizing:border-box}#certPhoneBody img{max-width:100%}#certPhoneBody .avatar{width:90px;height:90px;border-radius:50%;object-fit:cover;display:block}#certPhoneBody .post{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;display:block;margin-top:6px}#certPhoneBody .follow-btn,#certPhoneBody .message-btn{padding:6px 14px;margin:3px}#certPhoneBody .likes{font-weight:700;margin-top:8px}';
+  const st=document.createElement('style'); st.textContent=baseCss+scopeCssToPhone(state.web.igCode.css||''); sheet.appendChild(st);
+  const foot=el('div'); foot.style.cssText='margin-top:28px;padding:0 46px 34px;display:flex;justify-content:space-between;align-items:flex-end';
+  foot.innerHTML=
+    '<div style="font-size:13.5px;color:#55617a;line-height:1.8">'
+      +'<div><b style="color:#27396B">Campus:</b> '+esc(state.college||'')+'</div>'
+      +'<div><b style="color:#27396B">Program:</b> '+esc(state.program||'')+'</div>'
+      +'<div><b style="color:#27396B">Batch:</b> '+esc(state.batch||'')+'</div>'
+    +'</div>'
+    +'<div style="text-align:center"><img src="'+SUNSTONE_SIG+'" style="width:200px;display:block" crossorigin="anonymous"></div>';
+  sheet.appendChild(foot);
+  document.body.appendChild(sheet);
+  toast('🏆 Generating your certificate…');
+  const cleanup=function(){ try{document.body.removeChild(sheet);}catch(e){} };
+  setTimeout(function(){
+    window.html2canvas(sheet,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false}).then(function(canvas){
+      try{
+        const jsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+        const imgW=W, imgH=canvas.height*(W/canvas.width);
+        const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[imgW,imgH]});
+        pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,imgW,imgH);
+        pdf.save('Instagram_Certificate_'+(state.name||'student').replace(/\s+/g,'_')+'.pdf');
+        toast('🏆 Certificate downloaded!');
+      }catch(e){
+        const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='Instagram_Certificate_'+(state.name||'student').replace(/\s+/g,'_')+'.png';a.click();
+        toast('🏆 Certificate saved!');
+      }
+      cleanup();
+    }).catch(function(){ cleanup(); toast('Could not generate certificate — please try again'); });
+  },120);
+}
 function webDone(){
   setTimeout(()=>{Audio_.win();Confetti.fireworks();},150);
   const box=el('div');
@@ -2166,9 +2233,10 @@ function webDone(){
   sc.appendChild(frame);phone.appendChild(sc);phoneWrap.appendChild(phone);c.appendChild(phoneWrap);
   setTimeout(()=>{ frame.srcdoc=igSrcdoc()+'<!--'+Date.now()+'-->'; },30);
   const foot=el('div','footbar');foot.style.justifyContent='center';
+  const cert=el('button','btn gold','🏆 Download Certificate');cert.onclick=()=>{Audio_.click();downloadIGCertificate();};
   const again=el('button','btn ghost','⚙ Keep Editing');again.onclick=()=>{Audio_.click();state.web.stage=3;render();};
   const home=el('button','btn','🏠 Choose Another Challenge');home.onclick=()=>{Audio_.click();state.screen='select';render();};
-  foot.appendChild(again);foot.appendChild(home);c.appendChild(foot);
+  foot.appendChild(cert);foot.appendChild(again);foot.appendChild(home);c.appendChild(foot);
   box.appendChild(c);
   return box;
 }
