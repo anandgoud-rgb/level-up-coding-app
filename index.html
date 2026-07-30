@@ -2059,11 +2059,20 @@ function igJsApply(action){
   igPreview(false);
 }
 function igRunTestsJS(){
-  const f=document.getElementById('igFrame'); let doc=null; try{doc=f.contentDocument||f.contentWindow.document;}catch(e){}
-  const tlist=document.getElementById('igTests'); if(!tlist)return; let all=true;
-  IG_JS_TESTS.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(doc);}catch(e){ok=false;} if(!ok)all=false;
-    const it=tlist.children[i]; if(it){it.className='test-item '+(ok?'pass':'fail'); const bx=it.querySelector('.tbox'); if(bx)bx.textContent=ok?'✓':'✗';} });
-  if(all)igStage3Pass(); else {Audio_.wrong&&Audio_.wrong();toast('Add the interactions so every test passes!');}
+  // Run the behavioral tests inside a hidden throwaway iframe so clicking/typing
+  // during tests never mutates the student's visible profile preview.
+  const host=document.createElement('iframe');
+  host.style.cssText='position:absolute;left:-9999px;top:-9999px;width:360px;height:720px;border:0';
+  document.body.appendChild(host);
+  host.onload=function(){
+    let doc=null; try{doc=host.contentDocument||host.contentWindow.document;}catch(e){}
+    const tlist=document.getElementById('igTests'); let all=true;
+    IG_JS_TESTS.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(doc);}catch(e){ok=false;} if(!ok)all=false;
+      const it=tlist&&tlist.children[i]; if(it){it.className='test-item '+(ok?'pass':'fail'); const bx=it.querySelector('.tbox'); if(bx)bx.textContent=ok?'✓':'✗';} });
+    setTimeout(function(){ try{host.remove();}catch(e){} },60);
+    if(all)igStage3Pass(); else {Audio_.wrong&&Audio_.wrong();toast('Add the interactions so every test passes!');}
+  };
+  host.srcdoc=igSrcdoc();
 }
 function igStage3Pass(){
   const first=!state.web.s3done; if(first){state.web.s3done=true;state.xp+=100;}
