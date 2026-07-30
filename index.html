@@ -2149,10 +2149,13 @@ function webDone(){
     <h1 style="background:linear-gradient(135deg,var(--cyan),var(--lime));-webkit-background-clip:text;background-clip:text;color:transparent">Congratulations, ${esc(state.name)}!</h1>
     <p style="font-family:var(--font-display);font-weight:700;font-size:1.15rem">You built a real Instagram profile with <span style="color:var(--cyan)">HTML</span>, <span style="color:var(--magenta)">CSS</span> and <span style="color:var(--gold)">JavaScript</span>.</p>
     <div class="feat" style="justify-content:center;margin-top:6px"><span>🧱 HTML structure</span><span>🎨 CSS styling</span><span>⚡ JS interaction</span><span>✦ +200 XP</span></div>`;
-  const phoneWrap=el('div');phoneWrap.style.margin='20px auto 0';phoneWrap.style.maxWidth='300px';
-  const phone=el('div','phone');phone.innerHTML='<div class="notch"></div>';const sc=el('div','screen');
-  const p=state.web.profile;sc.appendChild(buildIG(p,{theme:p.theme,shape:'round',align:'center',btn:'pill',gradient:true,shadow:true,font:'modern'}));
-  phone.appendChild(sc);phoneWrap.appendChild(phone);c.appendChild(phoneWrap);
+  ensureIGCode();
+  const phoneWrap=el('div');phoneWrap.style.cssText='margin:20px auto 0;display:flex;justify-content:center';
+  const phone=el('div','phone ig-phone');phone.innerHTML='<div class="notch"></div>';
+  const sc=el('div','screen ig-screen');
+  const frame=el('iframe','ig-frame');frame.id='igDoneFrame';frame.setAttribute('title','your profile');
+  sc.appendChild(frame);phone.appendChild(sc);phoneWrap.appendChild(phone);c.appendChild(phoneWrap);
+  setTimeout(()=>{ frame.srcdoc=igSrcdoc()+'<!--'+Date.now()+'-->'; },30);
   const foot=el('div','footbar');foot.style.justifyContent='center';
   const again=el('button','btn ghost','⚙ Keep Editing');again.onclick=()=>{Audio_.click();state.web.stage=3;render();};
   const home=el('button','btn','🏠 Choose Another Challenge');home.onclick=()=>{Audio_.click();state.screen='select';render();};
