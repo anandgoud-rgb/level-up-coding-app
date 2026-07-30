@@ -1671,7 +1671,7 @@ function igSwapImages(str){
 function igSrcdoc(){
   const c=state.web.igCode||{html:'',css:'',js:''};
   var html=igSwapImages(c.html||'');
-  var base="*{box-sizing:border-box}body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:#14171a;background:#fff;padding:16px;line-height:1.5}img{max-width:100%}.avatar{width:90px;height:90px;border-radius:50%;object-fit:cover;display:block}.post{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;display:block;margin-top:6px}";
+  var base="*{box-sizing:border-box}body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:#14171a;background:#fff;padding:16px;line-height:1.5}img{max-width:100%}.avatar{width:90px;height:90px;border-radius:50%;object-fit:cover;display:block}.post{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;display:block;margin-top:6px}.follow-btn.following{background:#efefef;color:#333;border-color:#ccc}.likes{font-weight:700;margin-top:8px}.likes.liked{color:#e0245e}body.dark{background:#12142b;color:#fff}.theme-btn,.save-name{cursor:pointer;padding:6px 12px;border-radius:8px;border:1px solid #ccc;background:#fff;margin-top:8px}.edit-box{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.name-input{padding:6px;border:1px solid #ccc;border-radius:8px}";
   return '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+base+'</style><style>'+(c.css||'')+'</style></head><body>'+html+
     '<scr'+'ipt>window.onerror=function(){return true;};try{(function(){var M='+JSON.stringify(IMG_MAN)+',W='+JSON.stringify(IMG_WOMAN)+';[].forEach.call(document.querySelectorAll("img"),function(im){var s=im.getAttribute("src")||"";im.setAttribute("data-name",s);if(/woman\.png$/i.test(s))im.src=W;else if(/man\.png$/i.test(s))im.src=M;});})();}catch(e){}</scr'+'ipt>'+
     '<scr'+'ipt>try{'+(c.js||'')+'}catch(e){}</scr'+'ipt>'+
@@ -1771,6 +1771,7 @@ function igInsertHTML(snip){
 }
 function igRunTests(){
   if(state.web.stage===2){ igRunTestsCSS(); return; }
+  if(state.web.stage===3){ igRunTestsJS(); return; }
   const f=document.getElementById('igFrame'); let doc=null; try{doc=f.contentDocument||f.contentWindow.document;}catch(e){}
   const tlist=document.getElementById('igTests'); if(!tlist)return; let all=true;
   IG_HTML_TESTS.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(doc);}catch(e){ok=false;} if(!ok)all=false;
@@ -2021,126 +2022,122 @@ function webStage2(){
 }
 
 /* ---------- STAGE 3 : JAVASCRIPT PROJECT (inputs -> live profile) ---------- */
+/* ===== STAGE 3 : JAVASCRIPT (interaction options insert editable JS; live phone; behavioral tests) ===== */
+const JS_ACTIONS=[
+  {key:'follow',icon:'🔄',title:'Follow / Following',hint:'Click Follow to toggle to Following, and back.',
+   js:"const followBtn = document.querySelector('.follow-btn');\nfollowBtn.addEventListener('click', function(){\n  if (followBtn.textContent === 'Follow') {\n    followBtn.textContent = 'Following';\n    followBtn.classList.add('following');\n  } else {\n    followBtn.textContent = 'Follow';\n    followBtn.classList.remove('following');\n  }\n});"},
+  {key:'like',icon:'❤️',title:'Like the post',hint:'Click the photo to add a like.',need:'like-count',
+   html:'<p class="likes">🤍 <span class="like-count">0</span> likes</p>\n',
+   js:"const post = document.querySelector('.post');\nconst likeCount = document.querySelector('.like-count');\nlet likes = 0;\npost.addEventListener('click', function(){\n  likes = likes + 1;\n  likeCount.textContent = likes;\n  document.querySelector('.likes').classList.add('liked');\n});"},
+  {key:'dark',icon:'🌙',title:'Dark mode',hint:'A button that flips the profile to dark.',need:'theme-btn',
+   html:'<button class="theme-btn">🌙 Dark mode</button>\n',
+   js:"const themeBtn = document.querySelector('.theme-btn');\nthemeBtn.addEventListener('click', function(){\n  document.body.classList.toggle('dark');\n});"},
+  {key:'edit',icon:'✏️',title:'Edit username',hint:'Type a new name and save it live.',need:'name-input',
+   html:'<div class="edit-box"><input class="name-input" placeholder="New name"><button class="save-name">Save</button></div>\n',
+   js:"const nameInput = document.querySelector('.name-input');\nconst saveBtn = document.querySelector('.save-name');\nsaveBtn.addEventListener('click', function(){\n  document.querySelector('.username').textContent = nameInput.value;\n});"},
+  {key:'msg',icon:'💬',title:'Message sent',hint:'Click Message to show a confirmation.',
+   js:"const messageBtn = document.querySelector('.message-btn');\nmessageBtn.addEventListener('click', function(){\n  messageBtn.textContent = 'Message sent! ✓';\n});"}
+];
+const IG_JS_TESTS=[
+  {name:'Clicking Follow shows "Following"',fn:d=>{const b=d.querySelector('.follow-btn');if(!b)return false;b.click();return b.textContent.trim()==='Following';}},
+  {name:'Clicking the post adds a like',fn:d=>{const c=d.querySelector('.like-count'),p=d.querySelector('.post');if(!c||!p)return false;const before=parseInt(c.textContent)||0;p.click();return (parseInt(c.textContent)||0)>before;}},
+  {name:'Dark mode button toggles the theme',fn:d=>{const b=d.querySelector('.theme-btn');if(!b)return false;const was=d.body.classList.contains('dark');b.click();return d.body.classList.contains('dark')&&!was;}},
+  {name:'Saving a new name changes the username',fn:d=>{const i=d.querySelector('.name-input'),s=d.querySelector('.save-name'),u=d.querySelector('.username');if(!i||!s||!u)return false;i.value='Coder';s.click();return u.textContent.trim()==='Coder';}},
+  {name:'Clicking Message shows "Message sent!"',fn:d=>{const b=d.querySelector('.message-btn');if(!b)return false;b.click();return /message sent/i.test(b.textContent);}}
+];
+function igStripJsBlock(js,key){ const re=new RegExp('/\\*@'+key+'\\*/[\\s\\S]*?/\\*@/'+key+'\\*/\\n?','g'); return (js||'').replace(re,''); }
+function igJsApply(action){
+  ensureIGCode();
+  if(action.html && action.need && state.web.igCode.html.indexOf(action.need)<0){
+    state.web.igCode.html = state.web.igCode.html.replace(/\s*$/,'') + '\n' + action.html;
+  }
+  var js=igStripJsBlock(state.web.igCode.js,action.key).replace(/\n{3,}/g,'\n\n').replace(/^\s+/,'');
+  js = (js? js.replace(/\s*$/,'')+'\n\n':'') + '/*@'+action.key+'*/\n'+action.js+'\n/*@/'+action.key+'*/\n';
+  state.web.igCode.js=js;
+  if(state.web.igTab==='js'){var e=document.getElementById('igEd'); if(e)e.value=state.web.igCode.js;}
+  Audio_.pick&&Audio_.pick();
+  igPreview(false);
+}
+function igRunTestsJS(){
+  const f=document.getElementById('igFrame'); let doc=null; try{doc=f.contentDocument||f.contentWindow.document;}catch(e){}
+  const tlist=document.getElementById('igTests'); if(!tlist)return; let all=true;
+  IG_JS_TESTS.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(doc);}catch(e){ok=false;} if(!ok)all=false;
+    const it=tlist.children[i]; if(it){it.className='test-item '+(ok?'pass':'fail'); const bx=it.querySelector('.tbox'); if(bx)bx.textContent=ok?'✓':'✗';} });
+  if(all)igStage3Pass(); else {Audio_.wrong&&Audio_.wrong();toast('Add the interactions so every test passes!');}
+}
+function igStage3Pass(){
+  const first=!state.web.s3done; if(first){state.web.s3done=true;state.xp+=100;}
+  Audio_.win&&Audio_.win();Confetti.celebrate&&Confetti.celebrate();
+  const wrap=document.getElementById('igNext'); if(wrap){wrap.innerHTML='';
+    wrap.appendChild(el('div','pass-banner','✅ Your profile is interactive! You used HTML, CSS & JS.'));
+    const b=el('button','btn cyan','See your finished profile 🎉'); b.onclick=function(){Audio_.click();state.web.stage=4;render();}; wrap.appendChild(b);}
+}
 function webStage3(){
+  ensureIGCode();
+  state.web.igTab='js';
   const box=el('div');
-  box.appendChild(learnBanner('⚡','JavaScript adds interaction — the page reacts to what you do.'));
-  const layout=el('div','stage-layout');
+  box.appendChild(learnBanner('⚡','JavaScript adds interaction — the page reacts when you click and type.'));
+  const grid=el('div','ig-build');
 
-  // RIGHT: live preview (updated in place so typing never loses focus)
-  const phone=el('div','phone');phone.innerHTML='<div class="notch"></div>';
-  const screen=el('div','screen');screen.id='s3screen';phone.appendChild(screen);
-
-  // LEFT: form + buttons
-  const side=el('div','side');
-  side.appendChild(el('div','glass card',`<div class="eyebrow">Stage 3 · JavaScript</div>
-    <div style="font-family:var(--font-display);font-weight:800;font-size:1.05rem">Type on the left → watch the right change live 👉</div>`));
-
-  const p=state.web.profile;
-  const form=el('div','glass card');
-  form.innerHTML='<div class="eyebrow">Your details</div>';
-  const fg=el('div','form-grid');
-  // helper to make a text field bound to profile[key]
-  const field=(key,label,ph,area)=>{
-    const f=el('div','field');
-    f.innerHTML=`<label>${label}</label>`;
-    const input=area?el('textarea'):el('input');
-    if(area)input.rows=2;
-    input.placeholder=ph||'';input.value=p[key]||'';
-    input.addEventListener('input',()=>{p[key]=input.value;refreshS3();}); // live update = INPUT concept
-    f.appendChild(input);fg.appendChild(f);return f;
-  };
-  const row2=(a,b)=>{const r=el('div','field');const g=el('div','row2');g.appendChild(a);g.appendChild(b);r.appendChild(g);fg.appendChild(r);};
-  field('name','Name','Your full name');
-  field('username','Username','your.username');
-  field('bio','Bio','Say something about yourself…',true);
-  // profession + college side by side
-  const pf=el('div','field');pf.innerHTML='<label>Profession</label>';const pin=el('input');pin.value=p.profession;pin.placeholder='e.g. Student';pin.addEventListener('input',()=>{p.profession=pin.value;refreshS3();});pf.appendChild(pin);
-  const cf=el('div','field');cf.innerHTML='<label>College</label>';const cin=el('input');cin.value=p.college;cin.placeholder='e.g. Sunstone';cin.addEventListener('input',()=>{p.college=cin.value;refreshS3();});cf.appendChild(cin);
-  row2(pf,cf);
-  const cyf=el('div','field');cyf.innerHTML='<label>City</label>';const cyin=el('input');cyin.value=p.city;cyin.addEventListener('input',()=>{p.city=cyin.value;refreshS3();});cyf.appendChild(cyin);
-  const wf=el('div','field');wf.innerHTML='<label>Website</label>';const win=el('input');win.value=p.website;win.placeholder='mysite.com';win.addEventListener('input',()=>{p.website=win.value;refreshS3();});wf.appendChild(win);
-  row2(cyf,wf);
-  field('quote','Favourite quote','Words you live by');
-
-  // upload picture (FileReader)
-  const up=el('div','field');up.innerHTML='<label>Profile picture</label>';
-  const file=el('input');file.type='file';file.accept='image/*';
-  file.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
-    const reader=new FileReader();reader.onload=()=>{p.pic=reader.result;refreshS3();toast('🖼️ Picture added!');};reader.readAsDataURL(f);});
-  up.appendChild(file);fg.appendChild(up);
-  form.appendChild(fg);
-  form.appendChild(el('div','concept-note','💡 Concept: <b>Variables</b> store your data · <b>Input</b> updates the page live.'));
-  const alerts=el('div');alerts.id='s3alerts';
-  alerts.innerHTML='<div class="alert err" id="s3err">⚠ Username is empty — every profile needs one!</div><div class="alert warn" id="s3warn">⚠ Bio is over 150 characters — keep it short!</div>';
-  form.appendChild(alerts);
-  side.appendChild(form);
-
-  // magic buttons
-  const magic=el('div','glass card');
-  magic.innerHTML='<div class="eyebrow">Magic buttons</div><div class="muted" style="font-weight:600;font-size:.82rem;margin-bottom:8px">These run little JavaScript functions.</div>';
-  const gen=el('div','gen-row');
-  const mkBtn=(cls,label,fn)=>{const b=el('button','btn '+cls+' sm',label);b.onclick=fn;return b;};
-  gen.appendChild(mkBtn('cyan','🎲 Random Profile',()=>{ // loops + arrays
-    p.name=pick(WEB.names);p.username=pick(WEB.unamePre)+'.'+pick(WEB.unameSuf);p.bio=pick(WEB.bios);
-    p.profession=pick(WEB.professions);p.college=pick(WEB.colleges);p.city=pick(WEB.cities);p.quote=pick(WEB.quotes);
-    p.followers=500+((Math.random()*80000)|0);p.following=100+((Math.random()*900)|0);p.posts=10+((Math.random()*300)|0);
-    p.interests=[];for(let i=0;i<4;i++)p.interests.push(pick(WEB.interests)); // LOOP builds interests
-    rebuildStage3();toast('🎲 Generated a random profile!');}));
-  gen.appendChild(mkBtn('ghost','✍ Generate Bio',()=>{p.bio=pick(WEB.bios);rebuildStage3();}));
-  gen.appendChild(mkBtn('ghost','🏷 Generate Username',()=>{p.username=pick(WEB.unamePre)+'.'+pick(WEB.unameSuf)+((Math.random()*90+10)|0);rebuildStage3();}));
-  gen.appendChild(mkBtn('ghost','🔄 Reset',()=>{state.web.profile=null;ensureWebProfile();rebuildStage3();toast('🔄 Profile reset');}));
-  magic.appendChild(gen);
-
-  // operators: followers +/- , like
-  magic.appendChild(el('div','concept-note','💡 Concept: <b>Operators</b> add & subtract · <b>Decisions</b> show badges.'));
-  const ops=el('div','gen-row');
-  ops.appendChild(mkBtn('gold','➕ Followers',()=>{p.followers+=1000;refreshS3();Audio_.pick();}));   // + operator
-  ops.appendChild(mkBtn('ghost','➖ Followers',()=>{p.followers=Math.max(0,p.followers-1000);refreshS3();Audio_.pick();})); // - operator
-  ops.appendChild(mkBtn('ghost','❤ Like',()=>{p.likes+=1;refreshS3();Audio_.pick();}));               // ++ operator
-  ops.appendChild(mkBtn('ghost',p.followed?'✓ Following':'＋ Follow',()=>{p.followed=!p.followed;rebuildStage3();})); // boolean toggle
-  ops.appendChild(mkBtn('ghost','🔗 Share',()=>{toast('🔗 Profile link copied!');Audio_.pick();}));
-  magic.appendChild(ops);
-
-  // theme switch (switch statement)
-  magic.appendChild(el('div','concept-note','💡 Concept: <b>Switch</b> changes the theme.'));
-  const th=el('div','opt-row');
-  ['instagram','light','dark','blue','purple','pink','green'].forEach(t=>{
-    const btn=el('button','opt-pill'+(p.theme===t?' active':''),t[0].toUpperCase()+t.slice(1));
-    btn.onclick=()=>{p.theme=t;rebuildStage3();Audio_.click();};th.appendChild(btn);
+  // LEFT: interaction options
+  const left=el('div','ig-pieces glass card');
+  left.innerHTML='<div class="eyebrow">Interactions</div><div class="muted" style="font-weight:600;font-size:.82rem;margin:4px 0 10px">Add an interaction — it writes the JavaScript for you. Then click things in the phone! ⚡</div>';
+  JS_ACTIONS.forEach(function(a){
+    const g=el('div','style-group');
+    g.innerHTML='<div class="sg-title">'+a.icon+' '+a.title+'</div><div class="sg-hint">'+a.hint+'</div>';
+    const row=el('div','sg-opts');
+    const btn=el('button','style-opt','+ Add this');
+    btn.onclick=function(){ igJsApply(a); btn.classList.add('active'); };
+    row.appendChild(btn); g.appendChild(row); left.appendChild(g);
   });
-  magic.appendChild(th);
-  side.appendChild(magic);
+  grid.appendChild(left);
 
-  // finish
-  const fin=el('div','glass card center');
-  const fbtn=el('button','btn gold','🎉 Finish My Profile');
-  fbtn.onclick=()=>{
-    if(!p.username.trim()){toast('⚠ Add a username first!');Audio_.wrong();return;}
-    state.web.done=true;state.xp+=200;Audio_.win();Confetti.fireworks();syncProgress();state.web.stage=4;render();
-  };
-  fin.appendChild(fbtn);side.appendChild(fin);
+  // CENTER: phone
+  const center=el('div','ig-center');
+  const phone=el('div','phone ig-phone');phone.innerHTML='<div class="notch"></div>';
+  const screen=el('div','screen ig-screen');
+  const frame=el('iframe','ig-frame');frame.id='igFrame';frame.setAttribute('title','profile preview');
+  screen.appendChild(frame);phone.appendChild(screen);center.appendChild(phone);
+  grid.appendChild(center);
 
-  layout.appendChild(phone);layout.appendChild(side);box.appendChild(layout);
-  // initial preview + a re-render helper that rebuilds the whole stage (for button-state changes)
-  setTimeout(refreshS3,10);
+  // RIGHT: code (HTML+CSS+JS all editable) + tests
+  const right=el('div','ig-right');
+  const codeCard=el('div','glass card');
+  codeCard.innerHTML='<div class="code-tabs">'
+    +'<span class="ctab" data-tab="html">HTML</span>'
+    +'<span class="ctab" data-tab="css">CSS</span>'
+    +'<span class="ctab active" data-tab="js">JS</span></div>';
+  const ed=el('textarea','web-editor code'); ed.id='igEd'; ed.spellcheck=false;
+  ed.setAttribute('autocapitalize','off');ed.setAttribute('autocorrect','off');ed.setAttribute('autocomplete','off');
+  ed.value=state.web.igCode[state.web.igTab]||'';
+  codeCard.appendChild(ed);
+  const btns=el('div','lvl-btns');
+  const runB=el('button','btn cyan sm','▶ Run');const chkB=el('button','btn gold sm','✓ Check');const clrB=el('button','btn ghost sm','↺ Clear JS');
+  btns.appendChild(runB);btns.appendChild(chkB);btns.appendChild(clrB);codeCard.appendChild(btns);
+  right.appendChild(codeCard);
+
+  const testCard=el('div','glass card');
+  testCard.innerHTML='<div class="eyebrow">Test cases</div>';
+  const tlist=el('div','test-list');tlist.id='igTests';
+  IG_JS_TESTS.forEach(function(t){tlist.appendChild(el('div','test-item','<span class="tbox">•</span> '+esc(t.name)));});
+  testCard.appendChild(tlist);
+  const nextWrap=el('div');nextWrap.id='igNext';nextWrap.style.marginTop='10px';testCard.appendChild(nextWrap);
+  right.appendChild(testCard);
+  grid.appendChild(right);
+
+  box.appendChild(grid);
+
+  const tabs=codeCard.querySelectorAll('.ctab');
+  [].forEach.call(tabs,function(t){ t.onclick=function(){ if(t.classList.contains('locked'))return; [].forEach.call(tabs,function(x){x.classList.remove('active');}); t.classList.add('active'); state.web.igTab=t.getAttribute('data-tab'); ed.value=state.web.igCode[state.web.igTab]||''; ed.focus(); }; });
+
+  let tmr;
+  ed.addEventListener('input',function(){ state.web.igCode[state.web.igTab]=ed.value; clearTimeout(tmr); tmr=setTimeout(function(){igPreview(false);},250); });
+  ed.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart;e.target.value=e.target.value.slice(0,s)+'  '+e.target.value.slice(e.target.selectionEnd);e.target.selectionStart=e.target.selectionEnd=s+2;}});
+  runB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(false);};
+  chkB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(true);};
+  clrB.onclick=function(){Audio_.click();state.web.igCode.js='';if(state.web.igTab==='js')ed.value='';[].forEach.call(document.querySelectorAll('.ig-pieces .style-opt'),function(o){o.classList.remove('active');});document.getElementById('igNext').innerHTML='';[].forEach.call(document.querySelectorAll('#igTests .test-item'),function(it){it.className='test-item';it.querySelector('.tbox').textContent='•';});igPreview(false);ed.focus();};
+  setTimeout(function(){igPreview(false); if(state.web.s3done)igStage3Pass();},40);
   return box;
-}
-function ensureWebProfile(){
-  if(state.web.profile)return;
-  state.web.profile={name:'Your Name',username:'',bio:'✨ Tap a field to tell your story!',profession:'',college:'',city:'',website:'',quote:'',
-    followers:1250,following:340,posts:87,likes:0,followed:false,interests:['Coding','Travel','Music'],highlights:['Travel','Food','Code'],pic:null,theme:'instagram'};
-}
-function rebuildStage3(){render();} // rebuild whole stage (updates button labels/active states)
-function refreshS3(){
-  // updates ONLY the preview + alerts, so typing keeps focus
-  const p=state.web.profile;
-  const screen=document.getElementById('s3screen');
-  if(screen){const css={theme:p.theme,shape:'round',align:'center',btn:'pill',gradient:true,shadow:true,font:'modern'};
-    screen.innerHTML='';screen.appendChild(buildIG(p,css));}
-  // DECISION MAKING: show error / warning
-  const err=document.getElementById('s3err'),warn=document.getElementById('s3warn');
-  if(err)err.classList.toggle('show',!p.username.trim());        // username empty -> error
-  if(warn)warn.classList.toggle('show',(p.bio||'').length>150);  // bio too long -> warning
 }
 
 function webDone(){
