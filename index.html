@@ -2015,7 +2015,7 @@ function webStage2(){
   ed.addEventListener('input',function(){ state.web.igCode[state.web.igTab]=ed.value; clearTimeout(tmr); tmr=setTimeout(function(){igPreview(false);igCssSyncActive();},250); });
   ed.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart;e.target.value=e.target.value.slice(0,s)+'  '+e.target.value.slice(e.target.selectionEnd);e.target.selectionStart=e.target.selectionEnd=s+2;}});
   runB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(false);};
-  chkB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(true);};
+  chkB.onclick=function(){clearTimeout(tmr);Audio_.click();igRunTestsCSS();};
   clrB.onclick=function(){Audio_.click();state.web.igCode.css='';if(state.web.igTab==='css')ed.value='';[].forEach.call(document.querySelectorAll('.ig-pieces .style-opt'),function(o){o.classList.remove('active');});document.getElementById('igNext').innerHTML='';[].forEach.call(document.querySelectorAll('#igTests .test-item'),function(it){it.className='test-item';it.querySelector('.tbox').textContent='•';});igPreview(false);ed.focus();};
   setTimeout(function(){igCssSyncActive();igPreview(false); if(state.web.s2done)igStage2Pass();},40);
   return box;
@@ -2143,7 +2143,7 @@ function webStage3(){
   ed.addEventListener('input',function(){ state.web.igCode[state.web.igTab]=ed.value; clearTimeout(tmr); tmr=setTimeout(function(){igPreview(false);},250); });
   ed.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();const s=e.target.selectionStart;e.target.value=e.target.value.slice(0,s)+'  '+e.target.value.slice(e.target.selectionEnd);e.target.selectionStart=e.target.selectionEnd=s+2;}});
   runB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(false);};
-  chkB.onclick=function(){clearTimeout(tmr);Audio_.click();igPreview(true);};
+  chkB.onclick=function(){clearTimeout(tmr);Audio_.click();igRunTestsJS();};
   clrB.onclick=function(){Audio_.click();state.web.igCode.js='';if(state.web.igTab==='js')ed.value='';[].forEach.call(document.querySelectorAll('.ig-pieces .style-opt'),function(o){o.classList.remove('active');});document.getElementById('igNext').innerHTML='';[].forEach.call(document.querySelectorAll('#igTests .test-item'),function(it){it.className='test-item';it.querySelector('.tbox').textContent='•';});igPreview(false);ed.focus();};
   setTimeout(function(){igPreview(false); if(state.web.s3done)igStage3Pass();},40);
   return box;
