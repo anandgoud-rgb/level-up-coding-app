@@ -438,6 +438,12 @@ html[data-theme="light"] .phone .notch{background:#241a4d}
 .jeditor{background:#171436;color:#aeb6e6;font-family:ui-monospace,Menlo,Consolas,monospace;padding:16px;border-radius:12px;font-size:.92rem;white-space:pre-wrap;line-height:1.9;margin:8px 0 12px}
 .jc-fixed{white-space:pre-wrap}
 .jc-slot{background:#2b2960;color:#ffe08a;border:1.5px solid #6b6ae0;border-radius:6px;padding:2px 8px;font-family:inherit;font-size:.92rem;min-width:170px;outline:none}
+.jc-block{display:block;opacity:.6}
+.jc-code{display:block;width:100%;background:#2b2960;color:#ffe08a;border:1.5px dashed #6b6ae0;border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.92rem;line-height:1.7;outline:none;resize:vertical;margin:2px 0}
+.jc-code:focus{border-color:#a5b4fc;border-style:solid}
+.jhint{margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px 12px;font-weight:600;font-size:.85rem;color:#9a3412}
+.jbonus{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;font-weight:700;font-size:.85rem}
+.btn.sm{padding:6px 12px;font-size:.82rem}
 .jc-slot:focus{border-color:#a9a8ff;box-shadow:0 0 0 3px rgba(124,58,237,.25)}
 .jconsole{background:#0b0f1a;color:#7CFFB2;font-family:ui-monospace,Menlo,Consolas,monospace;padding:14px;border-radius:10px;min-height:64px;white-space:pre-wrap;margin-top:8px;font-size:.92rem}
 .jopts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
@@ -3210,6 +3216,45 @@ const JAVA_LEVELS=[
       answer:1,
       explain:'System.out.println() prints a line of output to the screen.'
     }
+  },
+  {
+    id:2, topic:'Variables', icon:'👨‍🎓', color:'#3b82f6',
+    badge:'Profile Creator', badgeIcon:'📇', xp:100,
+    appName:'Student Profile Generator', appIcon:'👨‍🎓',
+    learn:{
+      def:'Variables are containers used to store information in a program.',
+      why:'Instead of writing the same value again and again, store it once in a variable and reuse it anywhere.',
+      real:'Like a student ID card that keeps name, roll number, branch and college together in one place.',
+      example:'String name = "Rahul";\nint age = 18;\nString college = "Sunstone";'
+    },
+    mission:{
+      mode:'editor',
+      title:'Student Profile Generator',
+      expected:'a full student profile',
+      story:'A college hired you to build a profile generator. Store each detail in a variable, then print the profile.',
+      lockedTop:'public class Main {\n  public static void main(String[] args) {',
+      editable:'    _____ = _____;\n    _____ = _____;\n    _____ = _____;\n    _____ = _____;\n    _____ = _____;\n    _____ = _____;',
+      lockedBottom:'    System.out.println("===== STUDENT PROFILE =====");\n    System.out.println("Name : " + name);\n    System.out.println("Age : " + age);\n    System.out.println("Program : " + program);\n    System.out.println("College : " + college);\n    System.out.println("City : " + city);\n    System.out.println("Dream Company : " + dreamCompany);\n  }\n}',
+      required:[{name:'name',type:'String'},{name:'age',type:'int'},{name:'program',type:'String'},{name:'college',type:'String'},{name:'city',type:'String'},{name:'dreamCompany',type:'String'}],
+      hint:'Write each line like:  String name = "Rahul";   — and age is a whole number:  int age = 18;',
+      bonus:[
+        {icon:'🏏',name:"Virat Kohli's profile"},
+        {icon:'🧑‍🤝‍🧑',name:"Your friend's profile"},
+        {icon:'😎',name:'Your own profile'}
+      ],
+      tests:[
+        {name:'All 6 variables are declared',fn:c=>c.decls.length>=6},
+        {name:'Correct variable names used',fn:c=>c.namesOk},
+        {name:'Correct data types (age is int, others String)',fn:c=>c.typesOk},
+        {name:'Student profile prints successfully',fn:c=>/STUDENT PROFILE/i.test(c.output)&&/Name :/.test(c.output)&&/Dream Company :/.test(c.output)&&c.output.indexOf('_____')<0}
+      ]
+    },
+    mcq:{
+      q:'Which keyword is used to store text in Java?',
+      options:['int','boolean','String','double'],
+      answer:2,
+      explain:'String stores text like words and sentences. int stores whole numbers, double stores decimals, and boolean stores true/false.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3217,16 +3262,37 @@ function javaAllDone(){ return JAVA_LEVELS.every(function(l){return javaDone(l.i
 
 /* ---- Phase B simulator (swap for real execution API in Phase A) ---- */
 function runJavaB(code){
+  // collect variable declarations
+  var vars={}; var dre=/\b(?:String|int|long|double|float|boolean|char)\s+(\w+)\s*=\s*([^;]+);/g; var d;
+  while((d=dre.exec(code))){ vars[d[1]]=evalJavaValue(d[2],vars); }
   var out=[]; var re=/System\s*\.\s*out\s*\.\s*(println|print)\s*\(([\s\S]*?)\)\s*;/g; var m;
-  while((m=re.exec(code))){ out.push(evalJavaString(m[2])+(m[1]==='println'?'\n':'')); }
+  while((m=re.exec(code))){ out.push(evalJavaValue(m[2],vars)+(m[1]==='println'?'\n':'')); }
   return out.join('').replace(/\n$/,'');
 }
-function evalJavaString(arg){
-  arg=(arg||'').trim();
-  if(arg==='')return '';
+function _splitTopPlus(s){
+  var parts=[],cur='',q=null;
+  for(var i=0;i<s.length;i++){var c=s[i];
+    if(q){cur+=c;if(c===q)q=null;continue;}
+    if(c==='"'||c==="'"){q=c;cur+=c;continue;}
+    if(c==='+'){parts.push(cur);cur='';continue;}
+    cur+=c;
+  }
+  parts.push(cur); return parts;
+}
+function evalJavaValue(arg,vars){
+  vars=vars||{}; arg=(arg||'').trim(); if(arg==='')return '';
+  var parts=_splitTopPlus(arg);
+  if(parts.length>1) return parts.map(function(p){return evalJavaValue(p,vars);}).join('');
   if((arg.charAt(0)==='"'&&arg.charAt(arg.length-1)==='"')||(arg.charAt(0)==="'"&&arg.charAt(arg.length-1)==="'")) return arg.slice(1,-1);
-  if(arg.indexOf('+')>=0) return arg.split('+').map(function(p){return evalJavaString(p);}).join('');
+  if(/^-?\d+(\.\d+)?$/.test(arg)) return arg;
+  if(vars.hasOwnProperty(arg)) return String(vars[arg]);
   return arg; // beginner leniency: bare text (forgot quotes)
+}
+function evalJavaString(arg){ return evalJavaValue(arg,{}); }
+function parseJavaDecls(src){
+  var out=[]; var re=/\b(String|int|long|double|float|boolean|char)\s+(\w+)\s*=\s*([^;]+);/g; var m;
+  while((m=re.exec(src))){ out.push({type:m[1],name:m[2],value:(m[3]||'').trim()}); }
+  return out;
 }
 
 function javaOpen(id){ Audio_.click(); state.jv={id:id,screen:1,arg:'',missionMistake:false,mcqMistake:false,missionPassed:false}; state.screen='jlevel'; render(); }
@@ -3290,7 +3356,8 @@ function javaLearn(l){
    +'<div class="jrow">💡 <b>Why:</b> '+esc(l.learn.why)+'</div>'
    +'<div class="jrow">🌍 <b>Real life:</b> '+esc(l.learn.real)+'</div>'
    +'<div class="jrow" style="margin-top:6px;font-weight:700">☕ Java example:</div>'
-   +'<div class="jcode">'+esc(l.learn.example)+'</div>';
+   +'<div class="jcode">'+esc(l.learn.example)+'</div>'
+   +'<div style="margin-top:12px;background:linear-gradient(135deg,'+l.color+'22,#7c3aed22);border:1.5px solid '+l.color+'55;border-radius:12px;padding:11px 15px;font-weight:800;color:#5b21b6">🎮 Your mission: '+l.appIcon+' build the "'+esc(l.appName)+'"</div>';
   const b=el('button','btn cyan','Start Mission →');b.style.marginTop='14px';
   b.onclick=function(){Audio_.click();state.jv.screen=2;render();};
   c.appendChild(b);
@@ -3301,20 +3368,39 @@ function javaLearn(l){
 function javaMission(l){
   const box=el('div');
   const grid=el('div','jmission');
+  const M=l.mission, editor=(M.mode==='editor');
 
   const codeCard=el('div','glass card');
-  codeCard.innerHTML='<div class="eyebrow">Mission · '+esc(l.mission.title)+'</div>'
-   +'<div class="muted" style="font-weight:700;margin-bottom:6px">🎯 Expected output: <b style="color:var(--ink,#333)">'+esc(l.mission.expected)+'</b></div>';
-  const ed=el('div','jeditor');
-  const pre=el('span','jc-fixed');pre.textContent=l.mission.before;
-  const inp=el('input','jc-slot');inp.type='text';inp.value=state.jv.arg||'';inp.placeholder=l.mission.slotPlaceholder;inp.spellcheck=false;
-  inp.setAttribute('autocapitalize','off');inp.setAttribute('autocorrect','off');inp.setAttribute('autocomplete','off');
-  const post=el('span','jc-fixed');post.textContent=l.mission.after;
-  ed.appendChild(pre);ed.appendChild(inp);ed.appendChild(post);
-  codeCard.appendChild(ed);
+  codeCard.innerHTML='<div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,'+l.color+',#7c3aed);color:#fff;padding:12px 16px;border-radius:12px;margin-bottom:10px">'
+   +'<div style="font-size:32px">'+l.appIcon+'</div>'
+   +'<div><div style="font-family:var(--font-display);font-weight:800;font-size:1.06rem">'+esc(M.title)+'</div>'
+   +'<div style="font-size:.82rem;opacity:.94;font-weight:600">🎯 '+(editor?esc(M.story):'Make the output say: <b>'+esc(M.expected)+'</b>')+'</div></div>'
+   +'</div>';
+
+  let inp,textarea;
+  const edBox=el('div','jeditor');
+  if(editor){
+    if(state.jv.code==null)state.jv.code=M.editable;
+    const top=el('span','jc-fixed jc-block');top.textContent=M.lockedTop+'\n';
+    textarea=el('textarea','jc-code');textarea.value=state.jv.code;textarea.spellcheck=false;textarea.rows=6;
+    textarea.setAttribute('autocapitalize','off');textarea.setAttribute('autocorrect','off');textarea.setAttribute('autocomplete','off');
+    const bot=el('span','jc-fixed jc-block');bot.textContent='\n'+M.lockedBottom;
+    edBox.appendChild(top);edBox.appendChild(textarea);edBox.appendChild(bot);
+  }else{
+    const pre=el('span','jc-fixed');pre.textContent=M.before;
+    inp=el('input','jc-slot');inp.type='text';inp.value=state.jv.arg||'';inp.placeholder=M.slotPlaceholder;inp.spellcheck=false;
+    inp.setAttribute('autocapitalize','off');inp.setAttribute('autocorrect','off');inp.setAttribute('autocomplete','off');
+    const post=el('span','jc-fixed');post.textContent=M.after;
+    edBox.appendChild(pre);edBox.appendChild(inp);edBox.appendChild(post);
+  }
+  codeCard.appendChild(edBox);
+
   const row=el('div','lvl-btns');
   const runB=el('button','btn cyan','▶ Run');const chkB=el('button','btn gold','✓ Check');
-  row.appendChild(runB);row.appendChild(chkB);codeCard.appendChild(row);
+  row.appendChild(runB);row.appendChild(chkB);
+  if(M.hint){ const hb=el('button','btn ghost','💡 Hint'); hb.onclick=function(){Audio_.click();const h=document.getElementById('jhint');h.style.display=h.style.display==='none'?'block':'none';}; row.appendChild(hb); }
+  codeCard.appendChild(row);
+  if(M.hint){ const hint=el('div','jhint','💡 '+esc(M.hint)); hint.id='jhint'; hint.style.display='none'; codeCard.appendChild(hint); }
   grid.appendChild(codeCard);
 
   const right=el('div');
@@ -3323,25 +3409,68 @@ function javaMission(l){
   outCard.appendChild(outBox);right.appendChild(outCard);
   const testCard=el('div','glass card');testCard.style.marginTop='16px';testCard.innerHTML='<div class="eyebrow">Test cases</div>';
   const tlist=el('div','test-list');tlist.id='jtests';
-  l.mission.tests.forEach(function(t){tlist.appendChild(el('div','test-item','<span class="tbox">•</span> '+esc(t.name)));});
+  M.tests.forEach(function(t){tlist.appendChild(el('div','test-item','<span class="tbox">•</span> '+esc(t.name)));});
   testCard.appendChild(tlist);
   const nextWrap=el('div');nextWrap.id='jnext';nextWrap.style.marginTop='10px';testCard.appendChild(nextWrap);
   right.appendChild(testCard);grid.appendChild(right);
   box.appendChild(grid);
 
-  const assemble=function(){return l.mission.before+inp.value+l.mission.after;};
-  const run=function(){ state.jv.arg=inp.value; const o=runJavaB(assemble()); const ob=document.getElementById('jout'); ob.textContent=(o===''?'(no output)':o); return o; };
-  inp.addEventListener('input',function(){state.jv.arg=inp.value;});
-  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();chkB.click();}});
+  const assemble=function(){ return editor ? (M.lockedTop+'\n'+textarea.value+'\n'+M.lockedBottom) : (M.before+inp.value+M.after); };
+  const run=function(){ if(editor)state.jv.code=textarea.value; else state.jv.arg=inp.value; const o=runJavaB(assemble()); const ob=document.getElementById('jout'); ob.textContent=(o===''?'(no output)':o); return o; };
+
+  function editorFeedback(ctx){
+    const req=M.required, dn=ctx.decls.map(function(d){return d.name;});
+    if(ctx.decls.length<6) return 'You have declared '+ctx.decls.length+' of 6 variables. Each line looks like  String name = "Rahul";';
+    const missing=req.filter(function(r){return dn.indexOf(r.name)<0;});
+    if(missing.length) return 'Missing: '+missing.map(function(m){return m.name;}).join(', ')+'. Use these exact variable names.';
+    const tm={}; ctx.decls.forEach(function(d){tm[d.name]=d.type;});
+    const wt=req.filter(function(r){return tm[r.name]&&tm[r.name]!==r.type;});
+    if(wt.length){ const w=wt[0]; return "'"+w.name+"' should be "+(w.type==='int'?'a whole number (int age = 18;)':'text (String)')+', not '+tm[w.name]+'.'; }
+    if(ctx.output.indexOf('_____')>=0) return 'Some blanks are still empty — fill in every value.';
+    return 'Almost! Check your spelling and keep the print section as-is.';
+  }
+  function buildCtx(o){
+    const decls=parseJavaDecls(textarea.value), dn=decls.map(function(d){return d.name;});
+    const namesOk=M.required.every(function(r){return dn.indexOf(r.name)>=0;});
+    const tm={}; decls.forEach(function(d){tm[d.name]=d.type;});
+    const typesOk=M.required.every(function(r){return !tm[r.name]||tm[r.name]===r.type;});
+    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o};
+  }
+  function showBonus(){
+    if(!editor||!M.bonus)return;
+    const bc=el('div','glass card');bc.style.marginTop='12px';
+    bc.innerHTML='<div class="eyebrow">🎁 Bonus missions (optional)</div><div class="muted" style="font-size:.8rem;font-weight:600;margin-bottom:8px">Change the values to build these profiles and earn +25 XP each!</div>';
+    M.bonus.forEach(function(bn,bi){
+      const rowb=el('div','jbonus'); rowb.appendChild(el('span',null,bn.icon+' '+esc(bn.name)));
+      const claimed=(state.jv.bonusClaimed||[]).indexOf(bi)>=0;
+      const cb=el('button','btn '+(claimed?'ghost':'gold')+' sm',claimed?'✓ +25 XP':'Claim +25 XP'); if(claimed)cb.disabled=true;
+      cb.onclick=function(){
+        const d2=parseJavaDecls(textarea.value), n2=d2.map(function(x){return x.name;});
+        const valid=M.required.every(function(r){return n2.indexOf(r.name)>=0;}) && runJavaB(assemble()).indexOf('_____')<0;
+        if(!valid){toast('Fill in a full profile first!');return;}
+        if(!state.jv.bonusClaimed)state.jv.bonusClaimed=[];
+        if(state.jv.bonusClaimed.indexOf(bi)>=0)return;
+        state.jv.bonusClaimed.push(bi); state.xp=(state.xp||0)+25; Audio_.win(); Confetti.celebrate();
+        cb.textContent='✓ +25 XP'; cb.className='btn ghost sm'; cb.disabled=true; toast('🎉 +25 XP earned!');
+      };
+      rowb.appendChild(cb); bc.appendChild(rowb);
+    });
+    right.appendChild(bc);
+  }
+
+  if(editor){ textarea.addEventListener('input',function(){state.jv.code=textarea.value;});
+    textarea.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();const s=textarea.selectionStart;textarea.value=textarea.value.slice(0,s)+'    '+textarea.value.slice(textarea.selectionEnd);textarea.selectionStart=textarea.selectionEnd=s+4;}});
+  }else{ inp.addEventListener('input',function(){state.jv.arg=inp.value;}); inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();chkB.click();}}); }
   runB.onclick=function(){Audio_.click();run();};
   chkB.onclick=function(){
-    const o=run(); let all=true;
-    l.mission.tests.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(o);}catch(e){ok=false;} if(!ok)all=false;
+    const o=run(); let all=true; const ctx=editor?buildCtx(o):o;
+    M.tests.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(ctx);}catch(e){ok=false;} if(!ok)all=false;
       const it=document.querySelectorAll('#jtests .test-item')[i]; if(it){it.className='test-item '+(ok?'pass':'fail'); const bx=it.querySelector('.tbox'); if(bx)bx.textContent=ok?'✓':'✗';} });
     if(all){ state.jv.missionPassed=true; Audio_.win(); Confetti.celebrate();
       const w=document.getElementById('jnext'); w.innerHTML=''; w.appendChild(el('div','pass-banner','✅ MISSION COMPLETE!'));
       const b=el('button','btn cyan','Knowledge Check →'); b.onclick=function(){Audio_.click();state.jv.screen=3;render();}; w.appendChild(b);
-    } else { state.jv.missionMistake=true; Audio_.wrong(); toast('Not yet — make the output match the goal.'); }
+      showBonus();
+    } else { state.jv.missionMistake=true; Audio_.wrong(); toast(editor?editorFeedback(ctx):'Not yet — make the output match the goal.'); }
   };
   return box;
 }
