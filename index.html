@@ -424,6 +424,30 @@ html[data-theme="light"] .phone .notch{background:#241a4d}
 .style-opt{border:1.5px solid var(--border);background:#fff;border-radius:9px;padding:6px 11px;font-size:.78rem;font-weight:700;cursor:pointer;color:#39406b;transition:.12s}
 .style-opt:hover{border-color:var(--cyan)}
 .style-opt.active{background:var(--cyan);color:#fff;border-color:transparent}
+/* ---- new Java module ---- */
+.lvl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px;margin-top:14px}
+.jcard{cursor:pointer;text-align:center;min-height:130px;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.jsteps{display:flex;gap:8px;justify-content:center;margin:6px 0 14px;flex-wrap:wrap}
+.jstep{font-weight:800;font-size:.8rem;padding:6px 14px;border-radius:20px;background:var(--surface,#fff);border:1.5px solid var(--border);color:#8890ad}
+.jstep.cur{background:var(--cyan);color:#fff;border-color:transparent}
+.jstep.done{background:#e7faef;color:#1c7a45;border-color:#bfe6cd}
+.jrow{font-weight:600;margin:6px 0}
+.jcode{background:#171436;color:#d7dcff;font-family:ui-monospace,Menlo,Consolas,monospace;padding:12px 14px;border-radius:10px;margin-top:6px;font-size:.9rem}
+.jmission{display:grid;grid-template-columns:1fr 370px;gap:16px;align-items:start}
+@media(max-width:900px){.jmission{grid-template-columns:1fr}}
+.jeditor{background:#171436;color:#aeb6e6;font-family:ui-monospace,Menlo,Consolas,monospace;padding:16px;border-radius:12px;font-size:.92rem;white-space:pre-wrap;line-height:1.9;margin:8px 0 12px}
+.jc-fixed{white-space:pre-wrap}
+.jc-slot{background:#2b2960;color:#ffe08a;border:1.5px solid #6b6ae0;border-radius:6px;padding:2px 8px;font-family:inherit;font-size:.92rem;min-width:170px;outline:none}
+.jc-slot:focus{border-color:#a9a8ff;box-shadow:0 0 0 3px rgba(124,58,237,.25)}
+.jconsole{background:#0b0f1a;color:#7CFFB2;font-family:ui-monospace,Menlo,Consolas,monospace;padding:14px;border-radius:10px;min-height:64px;white-space:pre-wrap;margin-top:8px;font-size:.92rem}
+.jopts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.jopt{text-align:left;border:2px solid var(--border);background:#fff;border-radius:12px;padding:13px 16px;font-weight:700;font-family:ui-monospace,Menlo,Consolas,monospace;cursor:pointer;transition:.12s}
+.jopt:hover{border-color:var(--cyan)}
+.jopt.correct{background:#e7faef;border-color:#38b36b;color:#1c7a45}
+.jopt.wrong{background:#fdecec;border-color:#e05555;color:#a12a2a}
+.jexplain{font-weight:700}
+.jchips{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;font-weight:700;font-size:.82rem}
+.jchips span{border:1px solid var(--border);border-radius:20px;padding:7px 14px}
 .ig-right{display:flex;flex-direction:column;gap:14px}
 .code-tabs{display:flex;gap:6px;margin-bottom:10px}
 .ctab{flex:1;padding:8px;border:1px solid var(--border);background:var(--surface);border-radius:10px 10px 0 0;font-family:var(--font-display);font-weight:800;font-size:.82rem;color:var(--muted);cursor:pointer}
@@ -938,6 +962,8 @@ function stateToHash(){
   if(s.screen==='welcome')return '#/';
   if(s.screen==='select')return '#/select';
   if(s.screen==='map')return '#/java';
+  if(s.screen==='jhub')return '#/java';
+  if(s.screen==='jlevel')return '#/java/'+((s.jv&&s.jv.id)||'');
   if(s.screen==='level')return '#/java/'+(s.curId!=null?s.curId:'');
   if(s.screen==='finale')return '#/finale';
   if(s.screen==='atm')return '#/atm';
@@ -963,8 +989,8 @@ function routeFromHash(){
   if(p0==='atm'){ state.screen='atm'; return; }
   if(p0==='finale'){ state.screen='finale'; return; }
   if(p0==='java'){
-    if(parts[1]&&LEVELS.some(function(l){return String(l.id)===parts[1];})){ state.curId=isNaN(parts[1])?parts[1]:parseInt(parts[1],10); state.phase='intro'; state.screen='level'; }
-    else { state.screen='map'; }
+    if(parts[1]&&JAVA_LEVELS.some(function(l){return String(l.id)===parts[1];})){ const jid=parseInt(parts[1],10); state.jv={id:jid,screen:1,arg:'',missionMistake:false,mcqMistake:false,missionPassed:false}; state.screen='jlevel'; }
+    else { state.screen='jhub'; }
     return;
   }
   if(p0==='html'||p0==='css'||p0==='js'){
@@ -982,6 +1008,8 @@ function render(){
   if(state.screen==='welcome')app.appendChild(screenWelcome());
   else if(state.screen==='select')app.appendChild(screenSelect());
   else if(state.screen==='map')app.appendChild(screenMap());
+  else if(state.screen==='jhub')app.appendChild(javaHub());
+  else if(state.screen==='jlevel')app.appendChild(javaLevel());
   else if(state.screen==='level')app.appendChild(screenLevel());
   else if(state.screen==='finale')app.appendChild(screenFinale());
   else if(state.screen==='atm')app.appendChild(screenATM());
@@ -998,7 +1026,7 @@ function topbar(){
   // contextual map button inside the Java quest
   if(state.name&&(state.screen==='level'||state.screen==='finale'||state.screen==='atm')){
     const map=el('button','iconbtn','🗺️');map.title='Quest map';map.setAttribute('aria-label','Back to Java quest map');
-    map.onclick=()=>{state.screen='map';Audio_.click();render();};bar.appendChild(map);
+    map.onclick=()=>{state.screen='jhub';Audio_.click();render();};bar.appendChild(map);
   }
   // home button returns to the quest chooser
   if(state.name&&state.screen!=='welcome'&&state.screen!=='select'){
@@ -1442,7 +1470,7 @@ function screenSelect(){
     <h2>Code Challenge</h2>
     <div class="tags"><span>Java</span><span>Logic</span><span>Puzzles</span></div>
     <div class="status" style="color:var(--lime)">${codeDone? '▶ '+codeDone+' / '+LEVELS.length+' quests cleared':'✨ Not started yet'}</div>`;
-  const openCode=()=>{Audio_.click();state.screen='map';render();};
+  const openCode=()=>{Audio_.click();state.screen='jhub';render();};
   code.onclick=openCode;code.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCode();}};
   if(codeDone>=LEVELS.length)code.appendChild(el('div','badge-ribbon','🏆 Champion'));
 
@@ -3146,6 +3174,268 @@ function drawCertificate(o){
   logoImg.src=SUNSTONE_LOGO;sigImg.src=SUNSTONE_SIG;
 }
 function makeATMCert(){drawCertificate({track:'ATM Machine',file:'ATM_Builder_Certificate'});}
+
+/* ============================================================
+   NEW JAVA MODULE — write-code, 3-screen, game-like.
+   Phase B: runJavaB() simulates output. Swap it for a real
+   execution API later (Phase A) — levels/UI never change.
+   ============================================================ */
+const JAVA_LEVELS=[
+  {
+    id:1, topic:'Hello World', icon:'🖥️', color:'#ff4d9d',
+    badge:'First Program', badgeIcon:'🌟', xp:100,
+    appName:'Wake Up Computer', appIcon:'🖥️',
+    learn:{
+      def:'Hello World is the very first Java program. It displays a message on the screen.',
+      why:'It is how your program talks to you — by showing output.',
+      real:'Like saying "hello" to your computer for the very first time.',
+      example:'System.out.println("Hello World");'
+    },
+    mission:{
+      title:'Wake up the Computer',
+      expected:'Hello World',
+      before:'public class Main {\n  public static void main(String[] args) {\n    System.out.println(',
+      after:');\n  }\n}',
+      slotPlaceholder:'"Hello World"',
+      tests:[
+        {name:'Output exists',fn:o=>o.trim().length>0},
+        {name:'Correct spelling (hello world)',fn:o=>o.trim().toLowerCase().replace(/\s+/g,' ')==='hello world'},
+        {name:'Correct capitalization (Hello World)',fn:o=>o.trim()==='Hello World'},
+        {name:'Exactly "Hello World" — nothing extra',fn:o=>o==='Hello World'}
+      ]
+    },
+    mcq:{
+      q:'Which statement prints output in Java?',
+      options:['Scanner','System.out.println()','public class','int'],
+      answer:1,
+      explain:'System.out.println() prints a line of output to the screen.'
+    }
+  }
+];
+function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
+function javaAllDone(){ return JAVA_LEVELS.every(function(l){return javaDone(l.id);}); }
+
+/* ---- Phase B simulator (swap for real execution API in Phase A) ---- */
+function runJavaB(code){
+  var out=[]; var re=/System\s*\.\s*out\s*\.\s*(println|print)\s*\(([\s\S]*?)\)\s*;/g; var m;
+  while((m=re.exec(code))){ out.push(evalJavaString(m[2])+(m[1]==='println'?'\n':'')); }
+  return out.join('').replace(/\n$/,'');
+}
+function evalJavaString(arg){
+  arg=(arg||'').trim();
+  if(arg==='')return '';
+  if((arg.charAt(0)==='"'&&arg.charAt(arg.length-1)==='"')||(arg.charAt(0)==="'"&&arg.charAt(arg.length-1)==="'")) return arg.slice(1,-1);
+  if(arg.indexOf('+')>=0) return arg.split('+').map(function(p){return evalJavaString(p);}).join('');
+  return arg; // beginner leniency: bare text (forgot quotes)
+}
+
+function javaOpen(id){ Audio_.click(); state.jv={id:id,screen:1,arg:'',missionMistake:false,mcqMistake:false,missionPassed:false}; state.screen='jlevel'; render(); }
+
+/* ---------- HUB ---------- */
+function javaHub(){
+  const box=el('div');
+  box.appendChild(learnBanner('☕','Java Missions — finish every level to unlock your ATM certificate. Do them in any order!'));
+  const grid=el('div','lvl-grid');
+  JAVA_LEVELS.forEach(function(l){
+    const done=javaDone(l.id);
+    const card=el('button','glass card jcard'+(done?' done':''));
+    card.innerHTML='<div style="font-size:36px">'+l.icon+'</div>'
+      +'<div style="font-weight:800;font-family:var(--font-display)">Level '+l.id+'</div>'
+      +'<div style="font-weight:700">'+esc(l.topic)+'</div>'
+      +(done?'<div class="muted" style="color:var(--gold);font-weight:800">'+('★'.repeat((state.progress[l.id].stars||0)))+('☆'.repeat(3-(state.progress[l.id].stars||0)))+'</div>':'<div class="muted">Tap to start →</div>');
+    card.onclick=function(){javaOpen(l.id);};
+    grid.appendChild(card);
+  });
+  box.appendChild(grid);
+  const gate=el('div','glass card center');gate.style.marginTop='16px';
+  if(javaAllDone()){
+    gate.innerHTML='<div style="font-size:40px">🏧</div><h3 style="font-family:var(--font-display)">ATM Machine — Final Certificate unlocked!</h3><p class="muted" style="font-weight:600">You finished every Java level. Claim your certificate.</p>';
+    const b=el('button','btn cyan','🏆 Get Final Certificate');b.onclick=function(){makeATMCert();};gate.appendChild(b);
+  }else{
+    const left=JAVA_LEVELS.filter(function(l){return !javaDone(l.id);}).length;
+    gate.innerHTML='<div style="font-size:34px">🔒</div><div class="muted" style="font-weight:700">Finish all Java levels to unlock the final ATM certificate.<br>'+left+' level'+(left>1?'s':'')+' to go.</div>';
+  }
+  box.appendChild(gate);
+  return box;
+}
+
+/* ---------- LEVEL ROUTER (3 screens) ---------- */
+function javaLevel(){
+  const l=JAVA_LEVELS.find(function(x){return x.id===state.jv.id;});
+  const box=el('div');
+  box.appendChild(javaSteps());
+  if(state.jv.screen===1)box.appendChild(javaLearn(l));
+  else if(state.jv.screen===2)box.appendChild(javaMission(l));
+  else if(state.jv.screen===3)box.appendChild(javaMCQ(l));
+  else box.appendChild(javaComplete(l));
+  return box;
+}
+function javaSteps(){
+  const s=state.jv.screen; const names=['Learn','Mission','Quiz'];
+  const wrap=el('div','jsteps');
+  names.forEach(function(n,i){
+    const done=s>i+1||s===4, cur=s===i+1;
+    wrap.appendChild(el('div','jstep'+(done?' done':'')+(cur?' cur':''),(done?'✓':(i+1))+' '+n));
+  });
+  return wrap;
+}
+
+/* ---------- SCREEN 1 · LEARN ---------- */
+function javaLearn(l){
+  const c=el('div','glass card');
+  c.innerHTML='<div class="eyebrow">Level '+l.id+' · Learn</div>'
+   +'<div style="font-size:46px">'+l.icon+'</div>'
+   +'<h2 style="font-family:var(--font-display);margin:2px 0 6px">'+esc(l.topic)+'</h2>'
+   +'<p style="font-weight:700;font-size:1.02rem;margin:0 0 10px">'+esc(l.learn.def)+'</p>'
+   +'<div class="jrow">💡 <b>Why:</b> '+esc(l.learn.why)+'</div>'
+   +'<div class="jrow">🌍 <b>Real life:</b> '+esc(l.learn.real)+'</div>'
+   +'<div class="jrow" style="margin-top:6px;font-weight:700">☕ Java example:</div>'
+   +'<div class="jcode">'+esc(l.learn.example)+'</div>';
+  const b=el('button','btn cyan','Start Mission →');b.style.marginTop='14px';
+  b.onclick=function(){Audio_.click();state.jv.screen=2;render();};
+  c.appendChild(b);
+  return c;
+}
+
+/* ---------- SCREEN 2 · MISSION ---------- */
+function javaMission(l){
+  const box=el('div');
+  const grid=el('div','jmission');
+
+  const codeCard=el('div','glass card');
+  codeCard.innerHTML='<div class="eyebrow">Mission · '+esc(l.mission.title)+'</div>'
+   +'<div class="muted" style="font-weight:700;margin-bottom:6px">🎯 Expected output: <b style="color:var(--ink,#333)">'+esc(l.mission.expected)+'</b></div>';
+  const ed=el('div','jeditor');
+  const pre=el('span','jc-fixed');pre.textContent=l.mission.before;
+  const inp=el('input','jc-slot');inp.type='text';inp.value=state.jv.arg||'';inp.placeholder=l.mission.slotPlaceholder;inp.spellcheck=false;
+  inp.setAttribute('autocapitalize','off');inp.setAttribute('autocorrect','off');inp.setAttribute('autocomplete','off');
+  const post=el('span','jc-fixed');post.textContent=l.mission.after;
+  ed.appendChild(pre);ed.appendChild(inp);ed.appendChild(post);
+  codeCard.appendChild(ed);
+  const row=el('div','lvl-btns');
+  const runB=el('button','btn cyan','▶ Run');const chkB=el('button','btn gold','✓ Check');
+  row.appendChild(runB);row.appendChild(chkB);codeCard.appendChild(row);
+  grid.appendChild(codeCard);
+
+  const right=el('div');
+  const outCard=el('div','glass card');outCard.innerHTML='<div class="eyebrow">Output</div>';
+  const outBox=el('div','jconsole');outBox.id='jout';outBox.textContent='▶ Click Run to see your output';
+  outCard.appendChild(outBox);right.appendChild(outCard);
+  const testCard=el('div','glass card');testCard.style.marginTop='16px';testCard.innerHTML='<div class="eyebrow">Test cases</div>';
+  const tlist=el('div','test-list');tlist.id='jtests';
+  l.mission.tests.forEach(function(t){tlist.appendChild(el('div','test-item','<span class="tbox">•</span> '+esc(t.name)));});
+  testCard.appendChild(tlist);
+  const nextWrap=el('div');nextWrap.id='jnext';nextWrap.style.marginTop='10px';testCard.appendChild(nextWrap);
+  right.appendChild(testCard);grid.appendChild(right);
+  box.appendChild(grid);
+
+  const assemble=function(){return l.mission.before+inp.value+l.mission.after;};
+  const run=function(){ state.jv.arg=inp.value; const o=runJavaB(assemble()); const ob=document.getElementById('jout'); ob.textContent=(o===''?'(no output)':o); return o; };
+  inp.addEventListener('input',function(){state.jv.arg=inp.value;});
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();chkB.click();}});
+  runB.onclick=function(){Audio_.click();run();};
+  chkB.onclick=function(){
+    const o=run(); let all=true;
+    l.mission.tests.forEach(function(t,i){ let ok=false; try{ok=!!t.fn(o);}catch(e){ok=false;} if(!ok)all=false;
+      const it=document.querySelectorAll('#jtests .test-item')[i]; if(it){it.className='test-item '+(ok?'pass':'fail'); const bx=it.querySelector('.tbox'); if(bx)bx.textContent=ok?'✓':'✗';} });
+    if(all){ state.jv.missionPassed=true; Audio_.win(); Confetti.celebrate();
+      const w=document.getElementById('jnext'); w.innerHTML=''; w.appendChild(el('div','pass-banner','✅ MISSION COMPLETE!'));
+      const b=el('button','btn cyan','Knowledge Check →'); b.onclick=function(){Audio_.click();state.jv.screen=3;render();}; w.appendChild(b);
+    } else { state.jv.missionMistake=true; Audio_.wrong(); toast('Not yet — make the output match the goal.'); }
+  };
+  return box;
+}
+
+/* ---------- SCREEN 3 · KNOWLEDGE CHECK ---------- */
+function javaMCQ(l){
+  const c=el('div','glass card');
+  c.innerHTML='<div class="eyebrow">Level '+l.id+' · Knowledge Check</div>'
+   +'<h3 style="font-family:var(--font-display);margin:6px 0 2px">'+esc(l.mcq.q)+'</h3>';
+  const opts=el('div','jopts');
+  l.mcq.options.forEach(function(o,i){
+    const b=el('button','jopt',esc(o));
+    b.onclick=function(){
+      if(b.classList.contains('correct'))return;
+      if(i===l.mcq.answer){ b.classList.add('correct'); Audio_.win(); Confetti.celebrate();
+        [].forEach.call(opts.children,function(x){x.style.pointerEvents='none';});
+        const ex=document.getElementById('jexplain'); ex.style.color='#1c7a45'; ex.textContent='✅ Correct! '+l.mcq.explain;
+        setTimeout(function(){javaFinish(l);},900);
+      } else { b.classList.add('wrong'); state.jv.mcqMistake=true; Audio_.wrong();
+        const ex=document.getElementById('jexplain'); ex.style.color='#a12a2a'; ex.textContent='❌ Not quite. '+l.mcq.explain+' Try again!';
+      }
+    };
+    opts.appendChild(b);
+  });
+  c.appendChild(opts);
+  const ex=el('div','jexplain');ex.id='jexplain';ex.style.marginTop='12px';c.appendChild(ex);
+  return c;
+}
+
+/* ---------- finish + SCREEN 4 · COMPLETE ---------- */
+function javaFinish(l){
+  const mistakes=(state.jv.missionMistake?1:0)+(state.jv.mcqMistake?1:0);
+  const stars = mistakes===0?3 : (mistakes===1?2:1);
+  if(!state.progress)state.progress={};
+  const prev=state.progress[l.id];
+  const best=Math.max(stars,(prev&&prev.stars)||0);
+  const firstTime=!(prev&&prev.done);
+  state.progress[l.id]={done:true,stars:best};
+  if(firstTime){ state.xp=(state.xp||0)+l.xp; }
+  state.jv.finalStars=best;
+  state.jv.screen=4;
+  try{ if(typeof syncProgress==='function')syncProgress(); }catch(e){}
+  render();
+}
+function javaComplete(l){
+  const stars=state.jv.finalStars||1;
+  const c=el('div','glass card center');
+  c.innerHTML='<div style="font-size:54px">🏆</div>'
+   +'<div class="eyebrow">Level Complete</div>'
+   +'<h2 style="font-family:var(--font-display);color:var(--ok);margin:2px 0">'+esc(l.topic)+'</h2>'
+   +'<div style="font-size:30px;letter-spacing:6px;color:var(--gold)">'+('★'.repeat(stars))+('☆'.repeat(3-stars))+'</div>'
+   +'<div class="jchips"><span>'+l.appIcon+' '+esc(l.appName)+'</span><span>✦ +'+l.xp+' XP</span><span>'+l.badgeIcon+' '+esc(l.badge)+'</span></div>';
+  const dl=el('button','btn gold','🎓 Download Mini Certificate');dl.onclick=function(){downloadMiniCert(l,dl);};
+  const next=JAVA_LEVELS.find(function(x){return !javaDone(x.id);});
+  const nb=el('button','btn cyan',next?'Next Level →':'🗺️ All Missions');
+  nb.onclick=function(){Audio_.click(); if(next)javaOpen(next.id); else {state.screen='jhub';render();}};
+  const hub=el('button','btn ghost','🗺️ All Missions');hub.onclick=function(){Audio_.click();state.screen='jhub';render();};
+  const foot=el('div','footbar');foot.style.justifyContent='center';foot.appendChild(dl);foot.appendChild(nb);if(next)foot.appendChild(hub);
+  c.appendChild(foot);
+  return c;
+}
+
+/* ---------- MINI CERTIFICATE (colourful PNG) ---------- */
+function buildMiniCertDOM(l){
+  const wrap=el('div');
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:640px;font-family:Nunito,Arial,sans-serif';
+  wrap.innerHTML='<div style="background:linear-gradient(135deg,#7c3aed,#ec4899);padding:9px;border-radius:24px">'
+   +'<div style="background:#fff;border-radius:16px;padding:32px 34px;text-align:center">'
+   +'<div style="font-size:13px;letter-spacing:4px;color:#7c3aed;font-weight:800">CERTIFICATE OF COMPLETION</div>'
+   +'<div style="font-size:48px;margin:10px 0">'+l.appIcon+'</div>'
+   +'<div style="color:#555;font-size:14px">This certifies that</div>'
+   +'<div style="font-size:32px;font-weight:800;color:#1f2937;margin:2px 0">'+esc(state.name||'')+'</div>'
+   +'<div style="color:#555;font-size:14px;margin-top:6px">has successfully completed</div>'
+   +'<div style="font-size:22px;font-weight:800;color:#ec4899;margin-top:2px">LEVEL '+l.id+' · '+esc(l.topic.toUpperCase())+'</div>'
+   +'<div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px;font-weight:700;font-size:13px;color:#374151">'
+     +'<span style="background:#f3e8ff;border-radius:20px;padding:7px 15px">'+l.appIcon+' '+esc(l.appName)+'</span>'
+     +'<span style="background:#fce7f3;border-radius:20px;padding:7px 15px">✦ +'+l.xp+' XP</span>'
+     +'<span style="background:#e0f2fe;border-radius:20px;padding:7px 15px">'+l.badgeIcon+' '+esc(l.badge)+'</span>'
+   +'</div>'
+   +'<div style="margin-top:18px;color:#9ca3af;font-size:12px;font-weight:700">Level Up · Sunstone</div>'
+   +'</div></div>';
+  return wrap;
+}
+function downloadMiniCert(l,btn){
+  if(!window.html2canvas){toast('Still loading… try again in a moment');return;}
+  const orig=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='⏳ Generating…';}
+  const dom=buildMiniCertDOM(l);document.body.appendChild(dom);
+  window.html2canvas(dom,{scale:2,backgroundColor:null,logging:false,useCORS:true}).then(function(canvas){
+    try{document.body.removeChild(dom);}catch(e){}
+    const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='Java_Level'+l.id+'_'+(state.name||'student').replace(/\s+/g,'_')+'.png';a.click();
+    toast('🎓 Mini certificate downloaded!');
+  }).catch(function(e){try{document.body.removeChild(dom);}catch(_){} console.warn(e); toast('Could not generate certificate.');})
+  .finally(function(){ if(btn){btn.disabled=false;btn.textContent=orig||'🎓 Download Mini Certificate';} });
+}
 
 /* boot */
 (async()=>{
