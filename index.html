@@ -3429,6 +3429,40 @@ const JAVA_LEVELS=[
       answer:2,
       explain:'A for loop is used when we know how many times we want to repeat a task.'
     }
+  },
+  {
+    id:8, topic:'Do-While Loop', icon:'🌠', color:'#14b8a6',
+    badge:'Loop Master', badgeIcon:'🌠', xp:100,
+    appName:'Reverse Star Pattern', appIcon:'🌠',
+    learn:{
+      def:'A do-while loop runs its body first, then checks the condition — so it always runs at least once.',
+      why:'Useful when you want the task to happen at least once, like showing a menu before asking to repeat.',
+      real:'Like a countdown: 5, 4, 3, 2, 1 — repeat while there\u2019s still a number left.',
+      example:'int i = 5;\ndo {\n    System.out.println("*".repeat(i));\n    i--;\n} while(i >= 1);'
+    },
+    mission:{
+      mode:'editor',
+      title:'Reverse Star Pattern',
+      story:'Build the same star pattern — but shrinking! Use a do-while loop to count down.',
+      expected:'a shrinking star pattern',
+      lockedTop:'public class Main {\n  public static void main(String[] args) {',
+      editable:'    int i = _____;\n    do {\n      System.out.println("*".repeat(i));\n      i--;\n    } while( i >= _____ );',
+      lockedBottom:'  }\n}',
+      hint:'Start at 5 and keep going while i is at least 1:  int i = 5;  ...  while( i >= 1 ).',
+      tests:[
+        {name:'Loop starts correctly (at 5)',fn:c=>/(^|\n)\*{5}(\n|$)/.test(c.output)},
+        {name:'Loop ends correctly (at 1)',fn:c=>{var l=c.output.split('\n').map(function(x){return x.trim();}).filter(function(x){return /^\*+$/.test(x);});return l.length>0&&l[l.length-1]==='*';}},
+        {name:'Five lines printed',fn:c=>c.output.split('\n').filter(function(x){return /^\*+$/.test(x.trim());}).length===5},
+        {name:'Pattern shrinks correctly',fn:c=>c.output.split('\n').map(function(x){return x.trim();}).filter(function(x){return /^\*+$/.test(x);}).join('|')==='*****|****|***|**|*'},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/\*/.test(c.output)}
+      ]
+    },
+    mcq:{
+      q:'Which loop always runs its body at least once, even if the condition is false?',
+      options:['for','while','do-while','if'],
+      answer:2,
+      explain:'A do-while loop checks its condition AFTER running the body, so the body always runs at least once.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3453,6 +3487,8 @@ function _execSeq(src,ctx){
     if(i>=n)break;
     if(/^if\b/.test(src.slice(i))){ i=_execIf(src,i,ctx); continue; }
     if(/^for\b/.test(src.slice(i))){ i=_execFor(src,i,ctx); continue; }
+    if(/^do\b/.test(src.slice(i))){ i=_execDoWhile(src,i,ctx); continue; }
+    if(/^while\b/.test(src.slice(i))){ i=_execWhile(src,i,ctx); continue; }
     if(/^switch\b/.test(src.slice(i))){ i=_execSwitch(src,i,ctx); continue; }
     var semi=src.indexOf(';',i), brace=src.indexOf('{',i);
     if(semi===-1&&brace===-1)break;
@@ -3524,6 +3560,22 @@ function _execFor(src,i,ctx){
   while(evalCond(cond,ctx.vars)&&guard<100000){ _execSeq(block,ctx); _execUpdate(upd,ctx); guard++; }
   return pos;
 }
+function _execWhile(src,i,ctx){
+  var pOpen=src.indexOf('(',i), cond=_extractParen(src,pOpen), pClose=_skipParen(src,pOpen);
+  var bOpen=src.indexOf('{',pClose), block=_extractBlock(src,bOpen), pos=_skipBlock(src,bOpen);
+  var guard=0;
+  while(evalCond(cond,ctx.vars)&&guard<100000){ _execSeq(block,ctx); guard++; }
+  return pos;
+}
+function _execDoWhile(src,i,ctx){
+  var bOpen=src.indexOf('{',i), block=_extractBlock(src,bOpen), afterBlock=_skipBlock(src,bOpen);
+  var wIdx=src.indexOf('while',afterBlock);
+  var pOpen=src.indexOf('(',wIdx), cond=_extractParen(src,pOpen), pClose=_skipParen(src,pOpen);
+  var pos=pClose; var semi=src.indexOf(';',pClose); if(semi!==-1&&src.slice(pClose,semi).trim()==='')pos=semi+1;
+  var guard=0;
+  do{ _execSeq(block,ctx); guard++; }while(evalCond(cond,ctx.vars)&&guard<100000);
+  return pos;
+}
 function _execStmt(stmt,ctx){
   if(!stmt)return;
   var pm=stmt.match(/^System\s*\.\s*out\s*\.\s*(println|print)\s*\(([\s\S]*)\)$/);
@@ -3532,7 +3584,9 @@ function _execStmt(stmt,ctx){
   if(am){ var name=am[1], expr=am[2].trim();
     if(/\.\s*next\w*\s*\(\s*\)/.test(expr)){ var v=(ctx.ip<ctx.inputs.length?ctx.inputs[ctx.ip++]:''); ctx.vars[name]=v; ctx.out.push(v+'\n'); }
     else ctx.vars[name]=evalJavaValue(expr,ctx.vars);
+    return;
   }
+  if(/^\s*(?:\w+\s*(?:\+\+|--)|(?:\+\+|--)\s*\w+|\w+\s*[+\-]=\s*.+)\s*$/.test(stmt)){ _execUpdate(stmt,ctx); }
 }
 function _splitTop(s,delim){
   var parts=[],cur='',q=null,depth=0;
