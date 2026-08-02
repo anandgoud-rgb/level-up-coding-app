@@ -3431,30 +3431,64 @@ const JAVA_LEVELS=[
     }
   },
   {
-    id:8, topic:'Do-While Loop', icon:'🌠', color:'#14b8a6',
+    id:8, topic:'While Loop', icon:'🌠', color:'#14b8a6',
     badge:'Loop Master', badgeIcon:'🌠', xp:100,
     appName:'Reverse Star Pattern', appIcon:'🌠',
     learn:{
-      def:'A do-while loop runs its body first, then checks the condition — so it always runs at least once.',
-      why:'Useful when you want the task to happen at least once, like showing a menu before asking to repeat.',
-      real:'Like a countdown: 5, 4, 3, 2, 1 — repeat while there\u2019s still a number left.',
-      example:'int i = 5;\ndo {\n    System.out.println("*".repeat(i));\n    i--;\n} while(i >= 1);'
+      def:'A while loop repeats a task as long as a condition stays true.',
+      why:'Use it to keep repeating until something changes — the condition is checked before each run.',
+      real:'Like climbing down stairs while there are still steps left.',
+      example:'int i = 5;\nwhile(i >= 1){\n    System.out.println("*".repeat(i));\n    i--;\n}'
     },
     mission:{
       mode:'editor',
       title:'Reverse Star Pattern',
-      story:'Build the same star pattern — but shrinking! Use a do-while loop to count down.',
+      story:'Build a shrinking star pattern using a while loop!',
       expected:'a shrinking star pattern',
       lockedTop:'public class Main {\n  public static void main(String[] args) {',
-      editable:'    int i = _____;\n    do {\n      System.out.println("*".repeat(i));\n      i--;\n    } while( i >= _____ );',
+      editable:'    int i = _____;\n    while( i >= _____ ){\n      System.out.println("*".repeat(i));\n      i--;\n    }',
       lockedBottom:'  }\n}',
-      hint:'Start at 5 and keep going while i is at least 1:  int i = 5;  ...  while( i >= 1 ).',
+      hint:'Start at 5 and keep looping while i is at least 1:  int i = 5;  while( i >= 1 ).',
       tests:[
         {name:'Loop starts correctly (at 5)',fn:c=>/(^|\n)\*{5}(\n|$)/.test(c.output)},
         {name:'Loop ends correctly (at 1)',fn:c=>{var l=c.output.split('\n').map(function(x){return x.trim();}).filter(function(x){return /^\*+$/.test(x);});return l.length>0&&l[l.length-1]==='*';}},
         {name:'Five lines printed',fn:c=>c.output.split('\n').filter(function(x){return /^\*+$/.test(x.trim());}).length===5},
         {name:'Pattern shrinks correctly',fn:c=>c.output.split('\n').map(function(x){return x.trim();}).filter(function(x){return /^\*+$/.test(x);}).join('|')==='*****|****|***|**|*'},
         {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/\*/.test(c.output)}
+      ]
+    },
+    mcq:{
+      q:'Which loop repeats while a condition is true, checking the condition BEFORE each run?',
+      options:['do-while','while','switch','if'],
+      answer:1,
+      explain:'A while loop checks its condition first — if it is false at the start, the body may never run.'
+    }
+  },
+  {
+    id:9, topic:'Do-While Loop', icon:'🚀', color:'#6366f1',
+    badge:'Countdown Master', badgeIcon:'🚀', xp:100,
+    appName:'Countdown Launcher', appIcon:'🚀',
+    learn:{
+      def:'A do-while loop runs its body first, then checks the condition — so it always runs at least once.',
+      why:'Great when the task must happen at least once, like a rocket countdown before liftoff.',
+      real:'A countdown: 5, 4, 3, 2, 1 ... Blast off!',
+      example:'int count = 5;\ndo {\n    System.out.println(count);\n    count--;\n} while(count >= 1);'
+    },
+    mission:{
+      mode:'editor',
+      title:'Countdown Launcher',
+      story:'Launch a rocket! Count down from 5 to 1 with a do-while loop, then blast off.',
+      expected:'a countdown then liftoff',
+      lockedTop:'public class Main {\n  public static void main(String[] args) {',
+      editable:'    int count = _____;\n    do {\n      System.out.println(count);\n      count--;\n    } while( count >= _____ );',
+      lockedBottom:'    System.out.println("\ud83d\ude80 Blast Off!");\n  }\n}',
+      hint:'Start the count at 5 and keep going while count is at least 1:  int count = 5;  ...  while( count >= 1 ).',
+      tests:[
+        {name:'Countdown starts at 5',fn:c=>/(^|\n)5(\n|$)/.test(c.output)},
+        {name:'Countdown ends at 1',fn:c=>{var l=c.output.split('\n').map(function(x){return x.trim();}).filter(function(x){return /^\d+$/.test(x);});return l.length>0&&l[l.length-1]==='1';}},
+        {name:'Counts 5, 4, 3, 2, 1 in order',fn:c=>c.output.split('\n').map(function(x){return x.trim();}).filter(function(x){return /^\d+$/.test(x);}).join(',')==='5,4,3,2,1'},
+        {name:'Rocket blasts off',fn:c=>/Blast Off/i.test(c.output)},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0}
       ]
     },
     mcq:{
