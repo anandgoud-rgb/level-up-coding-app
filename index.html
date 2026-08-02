@@ -3395,6 +3395,40 @@ const JAVA_LEVELS=[
       answer:1,
       explain:'switch statements make menu-driven programs easier to read and maintain.'
     }
+  },
+  {
+    id:7, topic:'For Loops', icon:'⭐', color:'#f43f5e',
+    badge:'Loop Explorer', badgeIcon:'⭐', xp:100,
+    appName:'Star Pattern Builder', appIcon:'⭐',
+    learn:{
+      def:'A loop repeats the same task many times without rewriting the code.',
+      why:'To draw 100 stars you don\u2019t type * 100 times — the computer repeats it for you.',
+      real:'Like an elevator moving floor by floor, or taking steps one after another.',
+      example:'for(int i = 1; i <= 5; i++){\n    System.out.println("*".repeat(i));\n}'
+    },
+    mission:{
+      mode:'editor',
+      title:'Star Pattern Builder',
+      story:'A designer wants star patterns made by code, not by hand. Use a for loop to repeat the task!',
+      expected:'a growing star pattern',
+      lockedTop:'public class Main {\n  public static void main(String[] args) {',
+      editable:'    for(int i = _____ ; i <= _____ ; i++){\n      System.out.println("*".repeat(i));\n    }',
+      lockedBottom:'  }\n}',
+      hint:'Start the loop at 1 and end at 5:  for(int i = 1 ; i <= 5 ; i++).',
+      tests:[
+        {name:'Loop starts correctly (at 1)',fn:c=>/(^|\n)\*(\n|$)/.test(c.output)},
+        {name:'Loop ends correctly (at 5)',fn:c=>/(^|\n)\*{5}(\n|$)/.test(c.output)},
+        {name:'Five lines printed',fn:c=>c.output.split('\n').filter(function(l){return /^\*+$/.test(l.trim());}).length===5},
+        {name:'Pattern generated correctly',fn:c=>c.output.split('\n').map(function(l){return l.trim();}).filter(function(l){return /^\*+$/.test(l);}).join('|')==='*|**|***|****|*****'},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/\*/.test(c.output)}
+      ]
+    },
+    mcq:{
+      q:'Which Java loop is commonly used when you know how many times something should repeat?',
+      options:['Scanner','println','for','switch'],
+      answer:2,
+      explain:'A for loop is used when we know how many times we want to repeat a task.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3418,6 +3452,7 @@ function _execSeq(src,ctx){
     while(i<n&&/\s/.test(src[i]))i++;
     if(i>=n)break;
     if(/^if\b/.test(src.slice(i))){ i=_execIf(src,i,ctx); continue; }
+    if(/^for\b/.test(src.slice(i))){ i=_execFor(src,i,ctx); continue; }
     if(/^switch\b/.test(src.slice(i))){ i=_execSwitch(src,i,ctx); continue; }
     var semi=src.indexOf(';',i), brace=src.indexOf('{',i);
     if(semi===-1&&brace===-1)break;
@@ -3464,12 +3499,30 @@ function _execSwitchBody(src,ctx){
     var lm=rest.match(/^(?:case\b[^:]*:|default\s*:)/);
     if(lm){ i+=lm[0].length; continue; }
     if(/^if\b/.test(rest)){ i=_execIf(src,i,ctx); continue; }
+    if(/^for\b/.test(rest)){ i=_execFor(src,i,ctx); continue; }
     if(/^switch\b/.test(rest)){ i=_execSwitch(src,i,ctx); continue; }
     var semi=src.indexOf(';',i), brace=src.indexOf('{',i);
     if(semi===-1&&brace===-1)break;
     if(brace!==-1&&(semi===-1||brace<semi)){ _execSeq(_extractBlock(src,brace),ctx); i=_skipBlock(src,brace); continue; }
     _execStmt(src.slice(i,semi).trim(),ctx); i=semi+1;
   }
+}
+function _execUpdate(u,ctx){
+  u=(u||'').trim(); if(!u)return; var m;
+  if((m=u.match(/^(\w+)\s*\+\+$/))||(m=u.match(/^\+\+\s*(\w+)$/))){ ctx.vars[m[1]]=String((parseInt(ctx.vars[m[1]],10)||0)+1); return; }
+  if((m=u.match(/^(\w+)\s*--$/))||(m=u.match(/^--\s*(\w+)$/))){ ctx.vars[m[1]]=String((parseInt(ctx.vars[m[1]],10)||0)-1); return; }
+  if((m=u.match(/^(\w+)\s*\+=\s*(.+)$/))){ ctx.vars[m[1]]=String((parseInt(ctx.vars[m[1]],10)||0)+(parseInt(_subVars(m[2],ctx.vars),10)||0)); return; }
+  if((m=u.match(/^(\w+)\s*-=\s*(.+)$/))){ ctx.vars[m[1]]=String((parseInt(ctx.vars[m[1]],10)||0)-(parseInt(_subVars(m[2],ctx.vars),10)||0)); return; }
+  if((m=u.match(/^(\w+)\s*=\s*(.+)$/))){ ctx.vars[m[1]]=evalJavaValue(m[2],ctx.vars); }
+}
+function _execFor(src,i,ctx){
+  var pOpen=src.indexOf('(',i), header=_extractParen(src,pOpen), pClose=_skipParen(src,pOpen);
+  var bOpen=src.indexOf('{',pClose), block=_extractBlock(src,bOpen), pos=_skipBlock(src,bOpen);
+  var parts=header.split(';');
+  _execStmt((parts[0]||'').trim(),ctx);
+  var cond=(parts[1]||'').trim(), upd=(parts[2]||'').trim(), guard=0;
+  while(evalCond(cond,ctx.vars)&&guard<100000){ _execSeq(block,ctx); _execUpdate(upd,ctx); guard++; }
+  return pos;
 }
 function _execStmt(stmt,ctx){
   if(!stmt)return;
@@ -3553,6 +3606,8 @@ function evalIntExpr(s){
 }
 function evalJavaValue(arg,vars){
   vars=vars||{}; arg=(arg||'').trim(); if(arg==='')return '';
+  var rm=arg.match(/^(.+?)\.\s*repeat\s*\(([^)]*)\)$/);
+  if(rm){ var base=evalJavaValue(rm[1],vars); var cnt=parseInt(evalJavaValue(rm[2],vars),10)||0; var s=''; for(var ri=0;ri<cnt;ri++)s+=base; return s; }
   var sub=_subVars(_stripParens(arg),vars);
   if(/[-+*/%]/.test(sub)&&/^[\d\s()+\-*/%]+$/.test(sub)){ try{var r=evalIntExpr(sub); if(r!==null)return String(r);}catch(e){} }
   var parts=_splitTopPlus(arg);
