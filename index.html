@@ -3286,6 +3286,42 @@ const JAVA_LEVELS=[
       answer:0,
       explain:'Scanner reads what the user types. We create it with  new Scanner(System.in)  and read a line with  nextLine().'
     }
+  },
+  {
+    id:4, topic:'Operators', icon:'🧮', color:'#f59e0b',
+    badge:'Calculator Builder', badgeIcon:'🧮', xp:100,
+    appName:'Smart Calculator', appIcon:'🧮',
+    learn:{
+      def:'Operators are symbols that let the computer perform calculations.',
+      why:'They power everything — marks, bills, salaries, percentages and shopping totals.',
+      real:'Like the +, −, ×, ÷ buttons on your phone calculator: each one performs an operation.',
+      example:'int a = 20;\nint b = 10;\nSystem.out.println(a + b);   // 30'
+    },
+    mission:{
+      mode:'editor',
+      inputs:[{label:'Enter First Number',placeholder:'e.g. 20',default:'20'},{label:'Enter Second Number',placeholder:'e.g. 10',default:'10'}],
+      title:'Smart Calculator',
+      story:'A school needs a calculator that does the 5 basic operations. Build it!',
+      expected:'all five results',
+      lockedTop:'import java.util.Scanner;\npublic class Main {\n  public static void main(String[] args) {\n    Scanner sc = new Scanner(System.in);\n    System.out.print("Enter First Number : ");\n    int a = sc.nextInt();\n    System.out.print("Enter Second Number : ");\n    int b = sc.nextInt();\n    System.out.println("===== SMART CALCULATOR =====");',
+      editable:'    System.out.println("Addition       : " + (________));\n    System.out.println("Subtraction    : " + (________));\n    System.out.println("Multiplication : " + (________));\n    System.out.println("Division       : " + (________));\n    System.out.println("Remainder      : " + (________));',
+      lockedBottom:'    System.out.println("============================");\n  }\n}',
+      hint:'Fill each blank with the two numbers and an operator:  a + b ,  a - b ,  a * b ,  a / b ,  a % b',
+      tests:[
+        {name:'Addition works correctly',fn:c=>new RegExp('Addition\\s*:\\s*'+(c.a+c.b)+'(?!\\d)').test(c.output)},
+        {name:'Subtraction works correctly',fn:c=>new RegExp('Subtraction\\s*:\\s*'+(c.a-c.b)+'(?!\\d)').test(c.output)},
+        {name:'Multiplication works correctly',fn:c=>new RegExp('Multiplication\\s*:\\s*'+(c.a*c.b)+'(?!\\d)').test(c.output)},
+        {name:'Division works correctly',fn:c=>c.b!==0&&new RegExp('Division\\s*:\\s*'+Math.trunc(c.a/c.b)+'(?!\\d)').test(c.output)},
+        {name:'Remainder works correctly',fn:c=>c.b!==0&&new RegExp('Remainder\\s*:\\s*'+(c.a%c.b)+'(?!\\d)').test(c.output)},
+        {name:'Calculator runs successfully',fn:c=>/SMART CALCULATOR/i.test(c.output)&&c.output.indexOf('____')<0}
+      ]
+    },
+    mcq:{
+      q:'Which operator is used to find the remainder after division?',
+      options:['/','+','%','*'],
+      answer:2,
+      explain:'The modulus (%) operator returns the remainder after division. For example, 20 % 10 = 0.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3301,30 +3337,59 @@ function runJavaB(code, userInput){
     if(m[1]){ out.push(evalJavaValue(m[2],vars)+(m[1]==='println'?'\n':'')); }
     else if(m[3]!==undefined){
       var name=m[3], expr=(m[4]||'').trim();
-      if(/\.\s*next\w*\s*\(\s*\)/.test(expr)){ vars[name]=(ip<inputs.length?inputs[ip++]:''); }
+      if(/\.\s*next\w*\s*\(\s*\)/.test(expr)){ var v=(ip<inputs.length?inputs[ip++]:''); vars[name]=v; out.push(v+'\n'); }
       else { vars[name]=evalJavaValue(expr,vars); }
     }
   }
   return out.join('').replace(/\n$/,'');
 }
 function _splitTopPlus(s){
-  var parts=[],cur='',q=null;
+  var parts=[],cur='',q=null,depth=0;
   for(var i=0;i<s.length;i++){var c=s[i];
     if(q){cur+=c;if(c===q)q=null;continue;}
     if(c==='"'||c==="'"){q=c;cur+=c;continue;}
-    if(c==='+'){parts.push(cur);cur='';continue;}
+    if(c==='(')depth++; if(c===')')depth--;
+    if(c==='+'&&depth===0){parts.push(cur);cur='';continue;}
     cur+=c;
   }
   parts.push(cur); return parts;
 }
+function _stripParens(s){
+  s=(s||'').trim();
+  while(s.charAt(0)==='('){
+    var d=0,ok=true;
+    for(var i=0;i<s.length;i++){ if(s[i]==='(')d++; else if(s[i]===')'){d--; if(d===0){ if(i!==s.length-1)ok=false; break; }} }
+    if(ok&&d===0)s=s.slice(1,-1).trim(); else break;
+  }
+  return s;
+}
+function _subVars(s,vars){ return s.replace(/\b[a-zA-Z_]\w*\b/g,function(m){ if(vars.hasOwnProperty(m)&&/^-?\d+$/.test(String(vars[m])))return String(vars[m]); return m; }); }
+function evalIntExpr(s){
+  var toks=s.match(/\d+|[+\-*/%()]/g); if(!toks)return null;
+  var out=[],ops=[],prec={'+':1,'-':1,'*':2,'/':2,'%':2};
+  function apply(){var op=ops.pop(),b=out.pop(),a=out.pop(); if(a===undefined||b===undefined)throw'e';
+    var r; if(op==='+')r=a+b; else if(op==='-')r=a-b; else if(op==='*')r=a*b;
+    else if(op==='/'){if(b===0)throw'd0'; r=Math.trunc(a/b);} else if(op==='%'){if(b===0)throw'd0'; r=a%b;} out.push(r);}
+  for(var i=0;i<toks.length;i++){var t=toks[i];
+    if(/^\d+$/.test(t))out.push(parseInt(t,10));
+    else if(t==='(')ops.push(t);
+    else if(t===')'){while(ops.length&&ops[ops.length-1]!=='(')apply(); ops.pop();}
+    else{while(ops.length&&prec[ops[ops.length-1]]>=prec[t])apply(); ops.push(t);}
+  }
+  while(ops.length)apply();
+  return out.length===1?out[0]:null;
+}
 function evalJavaValue(arg,vars){
   vars=vars||{}; arg=(arg||'').trim(); if(arg==='')return '';
+  var sub=_subVars(_stripParens(arg),vars);
+  if(/[-+*/%]/.test(sub)&&/^[\d\s()+\-*/%]+$/.test(sub)){ try{var r=evalIntExpr(sub); if(r!==null)return String(r);}catch(e){} }
   var parts=_splitTopPlus(arg);
   if(parts.length>1) return parts.map(function(p){return evalJavaValue(p,vars);}).join('');
-  if((arg.charAt(0)==='"'&&arg.charAt(arg.length-1)==='"')||(arg.charAt(0)==="'"&&arg.charAt(arg.length-1)==="'")) return arg.slice(1,-1);
-  if(/^-?\d+(\.\d+)?$/.test(arg)) return arg;
-  if(vars.hasOwnProperty(arg)) return String(vars[arg]);
-  return arg; // beginner leniency: bare text (forgot quotes)
+  var a2=_stripParens(arg);
+  if((a2.charAt(0)==='"'&&a2.charAt(a2.length-1)==='"')||(a2.charAt(0)==="'"&&a2.charAt(a2.length-1)==="'")) return a2.slice(1,-1);
+  if(/^-?\d+(\.\d+)?$/.test(a2)) return a2;
+  if(vars.hasOwnProperty(a2)) return String(vars[a2]);
+  return a2; // beginner leniency
 }
 function evalJavaString(arg){ return evalJavaValue(arg,{}); }
 function parseJavaDecls(src){
@@ -3442,7 +3507,19 @@ function javaMission(l){
   grid.appendChild(codeCard);
 
   const right=el('div');
-  if(M.needsInput){
+  if(M.inputs){
+    if(!state.jv.userInputs)state.jv.userInputs=M.inputs.map(function(x){return x.default||'';});
+    const inCard=el('div','glass card');inCard.style.marginBottom='16px';
+    inCard.innerHTML='<div class="eyebrow">🧑 User input</div>';
+    M.inputs.forEach(function(spec,ii){
+      const lab=el('div',null,esc(spec.label));lab.style.cssText='font-weight:700;font-size:.8rem;margin:7px 0 3px;color:#667';
+      const box=el('input');box.type='text';box.className='name-input';box.style.cssText='width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;font-family:inherit';
+      box.value=state.jv.userInputs[ii]||'';box.placeholder=spec.placeholder||'';
+      box.addEventListener('input',function(){state.jv.userInputs[ii]=box.value;});
+      inCard.appendChild(lab);inCard.appendChild(box);
+    });
+    right.appendChild(inCard);
+  } else if(M.needsInput){
     if(state.jv.userInput==null)state.jv.userInput=(M.defaultInput||'');
     const inCard=el('div','glass card');inCard.style.marginBottom='16px';
     inCard.innerHTML='<div class="eyebrow">🧑 '+esc(M.inputPrompt||'User types')+'</div>';
@@ -3463,7 +3540,8 @@ function javaMission(l){
   box.appendChild(grid);
 
   const assemble=function(){ return editor ? (M.lockedTop+'\n'+textarea.value+'\n'+M.lockedBottom) : (M.before+inp.value+M.after); };
-  const run=function(){ if(editor)state.jv.code=textarea.value; else state.jv.arg=inp.value; const ui=M.needsInput?(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||'')):''; const o=runJavaB(assemble(),ui); const ob=document.getElementById('jout'); ob.textContent=(o===''?'(no output)':o); return o; };
+  const userInputStr=function(){ return M.inputs ? (state.jv.userInputs||[]).join('\n') : (M.needsInput?(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||'')):''); };
+  const run=function(){ if(editor)state.jv.code=textarea.value; else state.jv.arg=inp.value; const o=runJavaB(assemble(),userInputStr()); const ob=document.getElementById('jout'); ob.textContent=(o===''?'(no output)':o); return o; };
 
   function editorFeedback(ctx){
     if(!M.required){ return M.hint ? ('💡 '+M.hint) : 'Not quite — check your code and try again.'; }
@@ -3483,7 +3561,8 @@ function javaMission(l){
     const namesOk=req.every(function(r){return dn.indexOf(r.name)>=0;});
     const tm={}; decls.forEach(function(d){tm[d.name]=d.type;});
     const typesOk=req.every(function(r){return !tm[r.name]||tm[r.name]===r.type;});
-    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o,code:textarea.value,input:(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||''))};
+    const nums=(state.jv.userInputs||[]).map(function(x){return parseInt(x,10);});
+    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o,code:textarea.value,input:(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||'')),inputs:(state.jv.userInputs||[]),nums:nums,a:nums[0],b:nums[1]};
   }
 
   if(editor){ textarea.addEventListener('input',function(){state.jv.code=textarea.value;});
