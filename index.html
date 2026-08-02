@@ -3567,6 +3567,77 @@ const JAVA_LEVELS=[
       answer:1,
       explain:'Methods help organize programs into smaller, reusable pieces of code.'
     }
+  },
+  {
+    id:12, topic:'Arrays', icon:'📊', color:'#7c3aed',
+    badge:'Array Explorer', badgeIcon:'📊', xp:100,
+    appName:'Student Marks Manager', appIcon:'📊',
+    learn:{
+      def:'An array stores many values of the same type inside one variable.',
+      why:'Instead of mark1, mark2, mark3... you keep all marks together in one array.',
+      real:'Like a classroom attendance sheet — many students, one list.',
+      example:'int[] marks = {85, 90, 78, 88, 95};'
+    },
+    mission:{
+      mode:'editor',
+      title:'Student Marks Manager',
+      story:'A teacher needs the marks of five students. Store them in one array and display them all.',
+      expected:'five marks displayed',
+      lockedTop:'public class Main {\n  public static void main(String[] args) {',
+      editable:'    int[] marks = { _____, _____, _____, _____, _____ };',
+      lockedBottom:'    System.out.println("Student Marks");\n    for(int i = 0; i < marks.length; i++){\n      System.out.println("Student " + (i+1) + " : " + marks[i]);\n    }\n  }\n}',
+      hint:'Put five numbers inside the braces, separated by commas:  { 85, 90, 78, 88, 95 }.',
+      tests:[
+        {name:'Array created correctly',fn:c=>/int\s*\[\s*\]\s*marks\s*=\s*\{/.test(c.code)},
+        {name:'Five values stored',fn:c=>c.output.split('\n').filter(function(l){return /^Student \d+ :/.test(l.trim());}).length===5},
+        {name:'Values displayed correctly',fn:c=>/Student 1 :\s*\d+/.test(c.output)&&/Student 5 :\s*\d+/.test(c.output)},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/Student Marks/.test(c.output)}
+      ]
+    },
+    mcq:{
+      q:'Why do programmers use arrays?',
+      options:['To store multiple values in one variable','To replace Scanner','To create methods','To print faster'],
+      answer:0,
+      explain:'Arrays let us store many values together instead of creating multiple separate variables.'
+    }
+  },
+  {
+    id:13, topic:'Strings', icon:'📱', color:'#db2777',
+    badge:'String Master', badgeIcon:'📱', xp:100,
+    appName:'Username Generator', appIcon:'📱',
+    learn:{
+      def:'A String stores and works with text in Java.',
+      why:'Almost every app stores text — names, emails, usernames, messages. String methods modify and analyze it.',
+      real:'A username field: take the text a person types and transform or measure it.',
+      example:'String name = "Rahul";\nSystem.out.println(name.length());   // 5'
+    },
+    mission:{
+      mode:'editor',
+      needsInput:true,
+      inputPrompt:'Enter Your Name',
+      inputPlaceholder:'e.g. Rahul Sharma',
+      defaultInput:'Rahul Sharma',
+      title:'Username Generator',
+      story:'A social app needs a username generator. Show the name transformed and measured with String methods.',
+      expected:'name info displayed',
+      lockedTop:'import java.util.Scanner;\npublic class Main {\n  public static void main(String[] args){\n    Scanner sc = new Scanner(System.in);\n    System.out.print("Enter Your Name : ");\n    String name = sc.nextLine();\n    System.out.println("Original Name : " + name);',
+      editable:'    System.out.println("Uppercase : " + name.__________);\n    System.out.println("Lowercase : " + name.__________);\n    System.out.println("Length : " + name.__________);\n    System.out.println("First Character : " + name.__________);',
+      lockedBottom:'  }\n}',
+      hint:'Use the String methods:  toUpperCase() ,  toLowerCase() ,  length() ,  charAt(0).',
+      tests:[
+        {name:'Uppercase displayed correctly',fn:c=>c.output.indexOf('Uppercase : '+String(c.input).toUpperCase())>=0},
+        {name:'Lowercase displayed correctly',fn:c=>c.output.indexOf('Lowercase : '+String(c.input).toLowerCase())>=0},
+        {name:'Length displayed correctly',fn:c=>c.output.indexOf('Length : '+String(c.input).length)>=0},
+        {name:'First character displayed correctly',fn:c=>c.output.indexOf('First Character : '+String(c.input).charAt(0))>=0},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/Original Name/.test(c.output)}
+      ]
+    },
+    mcq:{
+      q:'Which String method returns the total number of characters?',
+      options:['charAt()','length()','toUpperCase()','toLowerCase()'],
+      answer:1,
+      explain:'The length() method returns the total number of characters in a String.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3598,7 +3669,7 @@ function _execSeq(src,ctx){
     if(/^switch\b/.test(src.slice(i))){ i=_execSwitch(src,i,ctx); continue; }
     var semi=src.indexOf(';',i), brace=src.indexOf('{',i);
     if(semi===-1&&brace===-1)break;
-    if(brace!==-1&&(semi===-1||brace<semi)){ var inner=_extractBlock(src,brace); _execSeq(inner,ctx); i=_skipBlock(src,brace); continue; }
+    if(brace!==-1&&(semi===-1||brace<semi)){ if(/=\s*$/.test(src.slice(i,brace))){ _execStmt(src.slice(i,semi).trim(),ctx); i=semi+1; continue; } var inner=_extractBlock(src,brace); _execSeq(inner,ctx); i=_skipBlock(src,brace); continue; }
     _execStmt(src.slice(i,semi).trim(),ctx); i=semi+1;
   }
 }
@@ -3686,6 +3757,8 @@ function _execStmt(stmt,ctx){
   if(!stmt)return;
   var pm=stmt.match(/^System\s*\.\s*out\s*\.\s*(println|print)\s*\(([\s\S]*)\)$/);
   if(pm){ ctx.out.push(evalJavaValue(pm[2],ctx.vars)+(pm[1]==='println'?'\n':'')); return; }
+  var arrM=stmt.match(/^\w+\s*\[\s*\]\s*(\w+)\s*=\s*\{([\s\S]*)\}$/);
+  if(arrM){ ctx.vars[arrM[1]]=_splitTop(arrM[2],',').map(function(x){return evalJavaValue(x,ctx.vars);}); return; }
   var am=stmt.match(/^(?:String|int|long|double|float|boolean|char)?\s*(\w+)\s*=\s*([\s\S]+)$/);
   if(am){ var name=am[1], expr=am[2].trim();
     if(/\.\s*next\w*\s*\(\s*\)/.test(expr)){ var v=(ctx.ip<ctx.inputs.length?ctx.inputs[ctx.ip++]:''); ctx.vars[name]=v; ctx.out.push(v+'\n'); }
@@ -3708,6 +3781,7 @@ function _splitTop(s,delim){
   parts.push(cur); return parts;
 }
 function _numOrVal(x,vars){ x=_stripParens((x||'').trim());
+  if(/\.\s*length$/.test(x)||/^\w+\s*\[[\s\S]+\]$/.test(x)){ var ev=evalJavaValue(x,vars); return /^-?\d+$/.test(ev)?parseInt(ev,10):ev; }
   var sub=_subVars(x,vars);
   if(/^-?\d+$/.test(sub))return parseInt(sub,10);
   if(/[-+*/%]/.test(sub)&&/^[\d\s()+\-*/%]+$/.test(sub)){ try{var r=evalIntExpr(sub); if(r!==null)return r;}catch(e){} }
@@ -3768,6 +3842,19 @@ function evalIntExpr(s){
 }
 function evalJavaValue(arg,vars){
   vars=vars||{}; arg=(arg||'').trim(); if(arg==='')return '';
+  var lm=arg.match(/^(\w+)\s*\.\s*length$/);
+  if(lm&&Array.isArray(vars[lm[1]])) return String(vars[lm[1]].length);
+  var xm=arg.match(/^(\w+)\s*\[([\s\S]+)\]$/);
+  if(xm&&Array.isArray(vars[xm[1]])){ var _i=parseInt(evalJavaValue(xm[2],vars),10)||0; var _e=vars[xm[1]][_i]; return _e===undefined?'':String(_e); }
+  var sm=arg.match(/^(\w+)\s*\.\s*(toUpperCase|toLowerCase|length|trim)\s*\(\s*\)$/);
+  if(sm){ var sb=vars.hasOwnProperty(sm[1])?String(vars[sm[1]]):sm[1];
+    if(sm[2]==='toUpperCase')return sb.toUpperCase();
+    if(sm[2]==='toLowerCase')return sb.toLowerCase();
+    if(sm[2]==='trim')return sb.trim();
+    return String(sb.length);
+  }
+  var cam=arg.match(/^(\w+)\s*\.\s*charAt\s*\(([^)]*)\)$/);
+  if(cam){ var cb=vars.hasOwnProperty(cam[1])?String(vars[cam[1]]):cam[1]; var ci=parseInt(evalJavaValue(cam[2],vars),10)||0; return cb.charAt(ci); }
   var rm=arg.match(/^(.+?)\.\s*repeat\s*\(([^)]*)\)$/);
   if(rm){ var base=evalJavaValue(rm[1],vars); var cnt=parseInt(evalJavaValue(rm[2],vars),10)||0; var s=''; for(var ri=0;ri<cnt;ri++)s+=base; return s; }
   var sub=_subVars(_stripParens(arg),vars);
