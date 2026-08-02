@@ -3358,6 +3358,43 @@ const JAVA_LEVELS=[
       answer:2,
       explain:'The if statement runs different code depending on whether a condition is true or false.'
     }
+  },
+  {
+    id:6, topic:'Switch Statements', icon:'🏧', color:'#0ea5e9',
+    badge:'ATM Menu Builder', badgeIcon:'🏧', xp:100,
+    appName:'ATM Menu', appIcon:'🏧',
+    learn:{
+      def:'A switch statement lets a program choose one option from many choices.',
+      why:'Perfect for menus — ATMs, restaurants, games. Cleaner than writing lots of if-else.',
+      real:'An ATM menu: you pick an option number, and it opens the matching operation.',
+      example:'switch(choice){\n  case 1: System.out.println("Balance"); break;\n  case 2: System.out.println("Deposit"); break;\n  default: System.out.println("Invalid Choice");\n}'
+    },
+    mission:{
+      mode:'editor',
+      inputs:[{label:'Enter Choice (1-5)',placeholder:'e.g. 3',default:'3'}],
+      title:'ATM Menu',
+      story:'A bank\u2019s new ATM menu is ready but not wired up. Connect each option to the right operation with a switch!',
+      expected:'the matching operation',
+      lockedTop:'import java.util.Scanner;\npublic class Main {\n  public static void main(String[] args) {\n    Scanner sc = new Scanner(System.in);\n    System.out.println("===== SUNSTONE BANK ATM =====");\n    System.out.println("1. Check Balance");\n    System.out.println("2. Deposit Money");\n    System.out.println("3. Withdraw Money");\n    System.out.println("4. Mini Statement");\n    System.out.println("5. Exit");\n    System.out.print("Enter Choice : ");\n    int choice = sc.nextInt();',
+      editable:'    switch(choice){\n      case _____ :\n        System.out.println("Checking Balance...");\n        break;\n      case _____ :\n        System.out.println("Depositing Money...");\n        break;\n      case _____ :\n        System.out.println("Withdrawing Money...");\n        break;\n      case _____ :\n        System.out.println("Opening Mini Statement...");\n        break;\n      case _____ :\n        System.out.println("Thank You for Banking!");\n        break;\n      default:\n        System.out.println("Invalid Choice");\n    }',
+      lockedBottom:'  }\n}',
+      hint:'Fill the case numbers in order: 1, 2, 3, 4, 5 — matching the menu options above.',
+      tests:[
+        {name:'Balance option works (1)',fn:c=>/Checking Balance/i.test(c.runWith(1))},
+        {name:'Deposit option works (2)',fn:c=>/Depositing Money/i.test(c.runWith(2))},
+        {name:'Withdraw option works (3)',fn:c=>/Withdrawing Money/i.test(c.runWith(3))},
+        {name:'Mini Statement works (4)',fn:c=>/Mini Statement/i.test(c.runWith(4))},
+        {name:'Exit works (5)',fn:c=>/Thank You/i.test(c.runWith(5))},
+        {name:'Invalid choice handled (6)',fn:c=>/Invalid Choice/i.test(c.runWith(6))},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0}
+      ]
+    },
+    mcq:{
+      q:'Which Java statement is best for displaying a menu with multiple choices?',
+      options:['if','switch','Scanner','println'],
+      answer:1,
+      explain:'switch statements make menu-driven programs easier to read and maintain.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3381,6 +3418,7 @@ function _execSeq(src,ctx){
     while(i<n&&/\s/.test(src[i]))i++;
     if(i>=n)break;
     if(/^if\b/.test(src.slice(i))){ i=_execIf(src,i,ctx); continue; }
+    if(/^switch\b/.test(src.slice(i))){ i=_execSwitch(src,i,ctx); continue; }
     var semi=src.indexOf(';',i), brace=src.indexOf('{',i);
     if(semi===-1&&brace===-1)break;
     if(brace!==-1&&(semi===-1||brace<semi)){ var inner=_extractBlock(src,brace); _execSeq(inner,ctx); i=_skipBlock(src,brace); continue; }
@@ -3402,6 +3440,36 @@ function _execIf(src,i,ctx){
   for(var k=0;k<branches.length;k++){ if(evalCond(branches[k].cond,ctx.vars)){ _execSeq(branches[k].block,ctx); done=true; break; } }
   if(!done&&elseBlock!=null)_execSeq(elseBlock,ctx);
   return pos;
+}
+function _execSwitch(src,i,ctx){
+  var pOpen=src.indexOf('(',i), expr=_extractParen(src,pOpen), pClose=_skipParen(src,pOpen);
+  var bOpen=src.indexOf('{',pClose), body=_extractBlock(src,bOpen), pos=_skipBlock(src,bOpen);
+  var val=_numOrVal(expr,ctx.vars);
+  var re=/\bcase\b([^:]*):|\bdefault\b\s*:/g, m, marks=[];
+  while((m=re.exec(body))){ marks.push({isDefault:(m[1]===undefined), label:(m[1]!==undefined?m[1].trim():null), end:re.lastIndex}); }
+  var startIdx=-1;
+  for(var k=0;k<marks.length;k++){ if(!marks[k].isDefault&&marks[k].label!=null){ var lv=_numOrVal(marks[k].label,ctx.vars); if(String(lv)===String(val)){ startIdx=k; break; } } }
+  if(startIdx===-1){ for(var k2=0;k2<marks.length;k2++){ if(marks[k2].isDefault){ startIdx=k2; break; } } }
+  if(startIdx===-1) return pos;
+  _execSwitchBody(body.slice(marks[startIdx].end),ctx);
+  return pos;
+}
+function _execSwitchBody(src,ctx){
+  var i=0,n=src.length;
+  while(i<n){
+    while(i<n&&/\s/.test(src[i]))i++;
+    if(i>=n)break;
+    var rest=src.slice(i);
+    if(/^break\b/.test(rest))break;
+    var lm=rest.match(/^(?:case\b[^:]*:|default\s*:)/);
+    if(lm){ i+=lm[0].length; continue; }
+    if(/^if\b/.test(rest)){ i=_execIf(src,i,ctx); continue; }
+    if(/^switch\b/.test(rest)){ i=_execSwitch(src,i,ctx); continue; }
+    var semi=src.indexOf(';',i), brace=src.indexOf('{',i);
+    if(semi===-1&&brace===-1)break;
+    if(brace!==-1&&(semi===-1||brace<semi)){ _execSeq(_extractBlock(src,brace),ctx); i=_skipBlock(src,brace); continue; }
+    _execStmt(src.slice(i,semi).trim(),ctx); i=semi+1;
+  }
 }
 function _execStmt(stmt,ctx){
   if(!stmt)return;
