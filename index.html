@@ -3532,41 +3532,6 @@ const JAVA_LEVELS=[
       answer:0,
       explain:'A nested loop is a loop inside another loop — the outer loop controls rows while the inner loop controls columns.'
     }
-  },
-  {
-    id:11, topic:'Methods', icon:'🧰', color:'#0d9488',
-    badge:'Method Master', badgeIcon:'🧰', xp:100,
-    appName:'Utility Calculator', appIcon:'🧰',
-    learn:{
-      def:'A method is a reusable block of code that does one specific task.',
-      why:'Like a restaurant: one chef makes pizza, another makes burgers. Methods split a big program into smaller reusable tasks.',
-      real:'An ATM: Check Balance, Deposit, Withdraw — each feature can be its own method.',
-      example:'public static void greet(){\n    System.out.println("Welcome!");\n}\n\ngreet();'
-    },
-    mission:{
-      mode:'editor',
-      title:'Utility Calculator',
-      story:'Your calculator got too big! Split it into reusable methods and call them from main().',
-      expected:'four methods, all called',
-      lockedTop:'public class Main {',
-      editable:'  public static void __________(){\n    System.out.println("Addition : 30");\n  }\n  public static void __________(){\n    System.out.println("Subtraction : 10");\n  }\n  public static void __________(){\n    System.out.println("Multiplication : 200");\n  }\n  public static void __________(){\n    System.out.println("Division : 2");\n  }\n  public static void main(String[] args){\n    __________();\n    __________();\n    __________();\n    __________();\n  }',
-      lockedBottom:'}',
-      hint:'Name the methods add, subtract, multiply, divide — then call each one the same way:  add();  subtract();  ...',
-      tests:[
-        {name:'add() method created',fn:c=>/\bvoid\s+add\s*\(/.test(c.code)},
-        {name:'subtract() method created',fn:c=>/\bvoid\s+subtract\s*\(/.test(c.code)},
-        {name:'multiply() method created',fn:c=>/\bvoid\s+multiply\s*\(/.test(c.code)},
-        {name:'divide() method created',fn:c=>/\bvoid\s+divide\s*\(/.test(c.code)},
-        {name:'All methods called from main',fn:c=>/Addition : 30/.test(c.output)&&/Subtraction : 10/.test(c.output)&&/Multiplication : 200/.test(c.output)&&/Division : 2/.test(c.output)},
-        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/Addition/.test(c.output)}
-      ]
-    },
-    mcq:{
-      q:'Why do programmers use methods?',
-      options:['To make programs longer','To organize and reuse code','To replace Scanner','To print faster'],
-      answer:1,
-      explain:'Methods help organize programs into smaller, reusable pieces of code.'
-    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
