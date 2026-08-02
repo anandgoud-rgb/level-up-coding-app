@@ -442,7 +442,6 @@ html[data-theme="light"] .phone .notch{background:#241a4d}
 .jc-code{display:block;width:100%;background:#2b2960;color:#ffe08a;border:1.5px dashed #6b6ae0;border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.92rem;line-height:1.7;outline:none;resize:vertical;margin:2px 0}
 .jc-code:focus{border-color:#a5b4fc;border-style:solid}
 .jhint{margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px 12px;font-weight:600;font-size:.85rem;color:#9a3412}
-.jbonus{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;font-weight:700;font-size:.85rem}
 .btn.sm{padding:6px 12px;font-size:.82rem}
 .jc-slot:focus{border-color:#a9a8ff;box-shadow:0 0 0 3px rgba(124,58,237,.25)}
 .jconsole{background:#0b0f1a;color:#7CFFB2;font-family:ui-monospace,Menlo,Consolas,monospace;padding:14px;border-radius:10px;min-height:64px;white-space:pre-wrap;margin-top:8px;font-size:.92rem}
@@ -3237,11 +3236,6 @@ const JAVA_LEVELS=[
       lockedBottom:'    System.out.println("===== STUDENT PROFILE =====");\n    System.out.println("Name : " + name);\n    System.out.println("Age : " + age);\n    System.out.println("Program : " + program);\n    System.out.println("College : " + college);\n    System.out.println("City : " + city);\n    System.out.println("Dream Company : " + dreamCompany);\n  }\n}',
       required:[{name:'name',type:'String'},{name:'age',type:'int'},{name:'program',type:'String'},{name:'college',type:'String'},{name:'city',type:'String'},{name:'dreamCompany',type:'String'}],
       hint:'Write each line like:  String name = "Rahul";   — and age is a whole number:  int age = 18;',
-      bonus:[
-        {icon:'🏏',name:"Virat Kohli's profile"},
-        {icon:'🧑‍🤝‍🧑',name:"Your friend's profile"},
-        {icon:'😎',name:'Your own profile'}
-      ],
       tests:[
         {name:'All 6 variables are declared',fn:c=>c.decls.length>=6},
         {name:'Correct variable names used',fn:c=>c.namesOk},
@@ -3255,18 +3249,62 @@ const JAVA_LEVELS=[
       answer:2,
       explain:'String stores text like words and sentences. int stores whole numbers, double stores decimals, and boolean stores true/false.'
     }
+  },
+  {
+    id:3, topic:'User Input', icon:'🎤', color:'#10b981',
+    badge:'Input Master', badgeIcon:'🎤', xp:100,
+    appName:'Greeting Machine', appIcon:'🎤',
+    learn:{
+      def:'User input lets a program read what the user types.',
+      why:'It makes programs interactive — the program can respond to each person differently.',
+      real:'Like a chatbot asking your name, then greeting you by it.',
+      example:'Scanner sc = new Scanner(System.in);\nString name = sc.nextLine();\nSystem.out.println("Hello, " + name);'
+    },
+    mission:{
+      mode:'editor',
+      needsInput:true,
+      inputPrompt:'What is your name? (type here, like a real user)',
+      inputPlaceholder:'e.g. Anand',
+      defaultInput:'Anand',
+      title:'Greeting Machine',
+      story:'Build a machine that asks for the user\u2019s name and greets them!',
+      expected:'a friendly greeting',
+      lockedTop:'import java.util.Scanner;\npublic class Main {\n  public static void main(String[] args) {\n    Scanner sc = new Scanner(System.in);\n    System.out.println("What is your name?");',
+      editable:'    String name = sc._______;\n    System.out.println("Hello, " + _______ + "! Welcome \ud83c\udf89");',
+      lockedBottom:'  }\n}',
+      hint:'Read the input with  sc.nextLine()  and put the variable  name  inside the greeting.',
+      tests:[
+        {name:'You read the input with nextLine()',fn:c=>/\.\s*nextline\s*\(\s*\)/i.test(c.code)},
+        {name:'The name is stored from input',fn:c=>/name\s*=\s*sc\s*\.\s*next/i.test(c.code)},
+        {name:'It greets with "Hello"',fn:c=>/hello/i.test(c.output)},
+        {name:'It greets the user by their name',fn:c=>!!c.input && c.output.indexOf(c.input)>=0 && c.output.indexOf('_______')<0}
+      ]
+    },
+    mcq:{
+      q:'Which class is used to read input from the user in Java?',
+      options:['Scanner','System','String','println'],
+      answer:0,
+      explain:'Scanner reads what the user types. We create it with  new Scanner(System.in)  and read a line with  nextLine().'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
 function javaAllDone(){ return JAVA_LEVELS.every(function(l){return javaDone(l.id);}); }
 
 /* ---- Phase B simulator (swap for real execution API in Phase A) ---- */
-function runJavaB(code){
-  // collect variable declarations
-  var vars={}; var dre=/\b(?:String|int|long|double|float|boolean|char)\s+(\w+)\s*=\s*([^;]+);/g; var d;
-  while((d=dre.exec(code))){ vars[d[1]]=evalJavaValue(d[2],vars); }
-  var out=[]; var re=/System\s*\.\s*out\s*\.\s*(println|print)\s*\(([\s\S]*?)\)\s*;/g; var m;
-  while((m=re.exec(code))){ out.push(evalJavaValue(m[2],vars)+(m[1]==='println'?'\n':'')); }
+function runJavaB(code, userInput){
+  var inputs=(userInput==null?'':String(userInput)).split('\n'); var ip=0;
+  var vars={}, out=[];
+  var re=/System\s*\.\s*out\s*\.\s*(println|print)\s*\(([\s\S]*?)\)\s*;|\b(?:String|int|long|double|float|boolean|char)?\s*(\w+)\s*=\s*([^;]+);/g;
+  var m;
+  while((m=re.exec(code))){
+    if(m[1]){ out.push(evalJavaValue(m[2],vars)+(m[1]==='println'?'\n':'')); }
+    else if(m[3]!==undefined){
+      var name=m[3], expr=(m[4]||'').trim();
+      if(/\.\s*next\w*\s*\(\s*\)/.test(expr)){ vars[name]=(ip<inputs.length?inputs[ip++]:''); }
+      else { vars[name]=evalJavaValue(expr,vars); }
+    }
+  }
   return out.join('').replace(/\n$/,'');
 }
 function _splitTopPlus(s){
@@ -3404,6 +3442,15 @@ function javaMission(l){
   grid.appendChild(codeCard);
 
   const right=el('div');
+  if(M.needsInput){
+    if(state.jv.userInput==null)state.jv.userInput=(M.defaultInput||'');
+    const inCard=el('div','glass card');inCard.style.marginBottom='16px';
+    inCard.innerHTML='<div class="eyebrow">🧑 '+esc(M.inputPrompt||'User types')+'</div>';
+    const ui=el('input');ui.type='text';ui.className='name-input';ui.style.cssText='width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;margin-top:6px;font-family:inherit';
+    ui.placeholder=M.inputPlaceholder||'Type here…';ui.value=state.jv.userInput;
+    ui.addEventListener('input',function(){state.jv.userInput=ui.value;});
+    inCard.appendChild(ui);right.appendChild(inCard);
+  }
   const outCard=el('div','glass card');outCard.innerHTML='<div class="eyebrow">Output</div>';
   const outBox=el('div','jconsole');outBox.id='jout';outBox.textContent='▶ Click Run to see your output';
   outCard.appendChild(outBox);right.appendChild(outCard);
@@ -3416,9 +3463,10 @@ function javaMission(l){
   box.appendChild(grid);
 
   const assemble=function(){ return editor ? (M.lockedTop+'\n'+textarea.value+'\n'+M.lockedBottom) : (M.before+inp.value+M.after); };
-  const run=function(){ if(editor)state.jv.code=textarea.value; else state.jv.arg=inp.value; const o=runJavaB(assemble()); const ob=document.getElementById('jout'); ob.textContent=(o===''?'(no output)':o); return o; };
+  const run=function(){ if(editor)state.jv.code=textarea.value; else state.jv.arg=inp.value; const ui=M.needsInput?(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||'')):''; const o=runJavaB(assemble(),ui); const ob=document.getElementById('jout'); ob.textContent=(o===''?'(no output)':o); return o; };
 
   function editorFeedback(ctx){
+    if(!M.required){ return M.hint ? ('💡 '+M.hint) : 'Not quite — check your code and try again.'; }
     const req=M.required, dn=ctx.decls.map(function(d){return d.name;});
     if(ctx.decls.length<6) return 'You have declared '+ctx.decls.length+' of 6 variables. Each line looks like  String name = "Rahul";';
     const missing=req.filter(function(r){return dn.indexOf(r.name)<0;});
@@ -3430,32 +3478,12 @@ function javaMission(l){
     return 'Almost! Check your spelling and keep the print section as-is.';
   }
   function buildCtx(o){
+    const req=M.required||[];
     const decls=parseJavaDecls(textarea.value), dn=decls.map(function(d){return d.name;});
-    const namesOk=M.required.every(function(r){return dn.indexOf(r.name)>=0;});
+    const namesOk=req.every(function(r){return dn.indexOf(r.name)>=0;});
     const tm={}; decls.forEach(function(d){tm[d.name]=d.type;});
-    const typesOk=M.required.every(function(r){return !tm[r.name]||tm[r.name]===r.type;});
-    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o};
-  }
-  function showBonus(){
-    if(!editor||!M.bonus)return;
-    const bc=el('div','glass card');bc.style.marginTop='12px';
-    bc.innerHTML='<div class="eyebrow">🎁 Bonus missions (optional)</div><div class="muted" style="font-size:.8rem;font-weight:600;margin-bottom:8px">Change the values to build these profiles and earn +25 XP each!</div>';
-    M.bonus.forEach(function(bn,bi){
-      const rowb=el('div','jbonus'); rowb.appendChild(el('span',null,bn.icon+' '+esc(bn.name)));
-      const claimed=(state.jv.bonusClaimed||[]).indexOf(bi)>=0;
-      const cb=el('button','btn '+(claimed?'ghost':'gold')+' sm',claimed?'✓ +25 XP':'Claim +25 XP'); if(claimed)cb.disabled=true;
-      cb.onclick=function(){
-        const d2=parseJavaDecls(textarea.value), n2=d2.map(function(x){return x.name;});
-        const valid=M.required.every(function(r){return n2.indexOf(r.name)>=0;}) && runJavaB(assemble()).indexOf('_____')<0;
-        if(!valid){toast('Fill in a full profile first!');return;}
-        if(!state.jv.bonusClaimed)state.jv.bonusClaimed=[];
-        if(state.jv.bonusClaimed.indexOf(bi)>=0)return;
-        state.jv.bonusClaimed.push(bi); state.xp=(state.xp||0)+25; Audio_.win(); Confetti.celebrate();
-        cb.textContent='✓ +25 XP'; cb.className='btn ghost sm'; cb.disabled=true; toast('🎉 +25 XP earned!');
-      };
-      rowb.appendChild(cb); bc.appendChild(rowb);
-    });
-    right.appendChild(bc);
+    const typesOk=req.every(function(r){return !tm[r.name]||tm[r.name]===r.type;});
+    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o,code:textarea.value,input:(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||''))};
   }
 
   if(editor){ textarea.addEventListener('input',function(){state.jv.code=textarea.value;});
@@ -3469,7 +3497,6 @@ function javaMission(l){
     if(all){ state.jv.missionPassed=true; Audio_.win(); Confetti.celebrate();
       const w=document.getElementById('jnext'); w.innerHTML=''; w.appendChild(el('div','pass-banner','✅ MISSION COMPLETE!'));
       const b=el('button','btn cyan','Knowledge Check →'); b.onclick=function(){Audio_.click();state.jv.screen=3;render();}; w.appendChild(b);
-      showBonus();
     } else { state.jv.missionMistake=true; Audio_.wrong(); toast(editor?editorFeedback(ctx):'Not yet — make the output match the goal.'); }
   };
   return box;
