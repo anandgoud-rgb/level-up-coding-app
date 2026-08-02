@@ -3497,6 +3497,76 @@ const JAVA_LEVELS=[
       answer:2,
       explain:'A do-while loop checks its condition AFTER running the body, so the body always runs at least once.'
     }
+  },
+  {
+    id:10, topic:'Nested Loops', icon:'🎨', color:'#ec4899',
+    badge:'Pattern Designer', badgeIcon:'🎨', xp:100,
+    appName:'Pattern Designer', appIcon:'🎨',
+    learn:{
+      def:'A nested loop is a loop inside another loop. The outer loop controls rows, the inner loop controls columns.',
+      why:'Perfect for grids, tables, calendars, game boards and patterns.',
+      real:'Like arranging chairs in a classroom — rows down, columns across, together making a full seating layout.',
+      example:'for(int i=1; i<=5; i++){\n  for(int j=1; j<=5; j++){\n    System.out.print("*");\n  }\n  System.out.println();\n}'
+    },
+    mission:{
+      mode:'editor',
+      title:'Pattern Designer',
+      story:'A designer needs a square star pattern made by code. Use nested loops to build it automatically!',
+      expected:'a 5x5 square of stars',
+      lockedTop:'public class Main {\n  public static void main(String[] args) {',
+      editable:'    for(int i = _____; i <= _____; i++){\n      for(int j = _____; j <= _____; j++){\n        System.out.print("*");\n      }\n      System.out.println();\n    }',
+      lockedBottom:'  }\n}',
+      hint:'Both loops go from 1 to 5:  for(int i = 1; i <= 5; i++)  and  for(int j = 1; j <= 5; j++).',
+      tests:[
+        {name:'Outer loop runs correctly (5 rows)',fn:c=>c.output.split('\n').filter(function(l){return /^\*+$/.test(l.trim());}).length===5},
+        {name:'Inner loop runs correctly (5 stars per row)',fn:c=>c.output.split('\n').filter(function(l){return l.trim()==='*****';}).length===5},
+        {name:'Five rows printed',fn:c=>c.output.split('\n').filter(function(l){return /^\*+$/.test(l.trim());}).length===5},
+        {name:'Five columns printed',fn:c=>{var r=c.output.split('\n').map(function(l){return l.trim();}).filter(function(l){return /^\*+$/.test(l);});return r.length>0&&r.every(function(x){return x.length===5;});}},
+        {name:'Pattern generated correctly',fn:c=>c.output.split('\n').map(function(l){return l.trim();}).filter(function(l){return /^\*+$/.test(l);}).join('|')==='*****|*****|*****|*****|*****'},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/\*/.test(c.output)}
+      ]
+    },
+    mcq:{
+      q:'Which statement about nested loops is correct?',
+      options:['A nested loop is a loop inside another loop','Nested loops only print stars','Nested loops can only run twice','Nested loops replace switch statements'],
+      answer:0,
+      explain:'A nested loop is a loop inside another loop — the outer loop controls rows while the inner loop controls columns.'
+    }
+  },
+  {
+    id:11, topic:'Methods', icon:'🧰', color:'#0d9488',
+    badge:'Method Master', badgeIcon:'🧰', xp:100,
+    appName:'Utility Calculator', appIcon:'🧰',
+    learn:{
+      def:'A method is a reusable block of code that does one specific task.',
+      why:'Like a restaurant: one chef makes pizza, another makes burgers. Methods split a big program into smaller reusable tasks.',
+      real:'An ATM: Check Balance, Deposit, Withdraw — each feature can be its own method.',
+      example:'public static void greet(){\n    System.out.println("Welcome!");\n}\n\ngreet();'
+    },
+    mission:{
+      mode:'editor',
+      title:'Utility Calculator',
+      story:'Your calculator got too big! Split it into reusable methods and call them from main().',
+      expected:'four methods, all called',
+      lockedTop:'public class Main {',
+      editable:'  public static void __________(){\n    System.out.println("Addition : 30");\n  }\n  public static void __________(){\n    System.out.println("Subtraction : 10");\n  }\n  public static void __________(){\n    System.out.println("Multiplication : 200");\n  }\n  public static void __________(){\n    System.out.println("Division : 2");\n  }\n  public static void main(String[] args){\n    __________();\n    __________();\n    __________();\n    __________();\n  }',
+      lockedBottom:'}',
+      hint:'Name the methods add, subtract, multiply, divide — then call each one the same way:  add();  subtract();  ...',
+      tests:[
+        {name:'add() method created',fn:c=>/\bvoid\s+add\s*\(/.test(c.code)},
+        {name:'subtract() method created',fn:c=>/\bvoid\s+subtract\s*\(/.test(c.code)},
+        {name:'multiply() method created',fn:c=>/\bvoid\s+multiply\s*\(/.test(c.code)},
+        {name:'divide() method created',fn:c=>/\bvoid\s+divide\s*\(/.test(c.code)},
+        {name:'All methods called from main',fn:c=>/Addition : 30/.test(c.output)&&/Subtraction : 10/.test(c.output)&&/Multiplication : 200/.test(c.output)&&/Division : 2/.test(c.output)},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/Addition/.test(c.output)}
+      ]
+    },
+    mcq:{
+      q:'Why do programmers use methods?',
+      options:['To make programs longer','To organize and reuse code','To replace Scanner','To print faster'],
+      answer:1,
+      explain:'Methods help organize programs into smaller, reusable pieces of code.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3504,8 +3574,10 @@ function javaAllDone(){ return JAVA_LEVELS.every(function(l){return javaDone(l.i
 
 /* ---- Phase B simulator (swap for real execution API in Phase A) ---- */
 function runJavaB(code, userInput){
-  var ctx={vars:{}, out:[], inputs:(userInput==null?'':String(userInput)).split('\n'), ip:0};
-  var body=code; var mm=code.match(/main\s*\([^)]*\)\s*\{/);
+  var ctx={vars:{}, out:[], inputs:(userInput==null?'':String(userInput)).split('\n'), ip:0, methods:{}};
+  var mre=/(?:public\s+|private\s+|protected\s+)?(?:static\s+)?(?:void|int|String|double|boolean|long|float|char)\s+(\w+)\s*\([^)]*\)\s*\{/g, mm2;
+  while((mm2=mre.exec(code))){ var nm=mm2[1], bstart=mm2.index+mm2[0].length-1, bod=_extractBlock(code,bstart); if(nm!=='main')ctx.methods[nm]=bod; }
+  var body=code; var mm=code.match(/\bmain\s*\([^)]*\)\s*\{/);
   if(mm){ var st=code.indexOf('{',mm.index); body=_extractBlock(code,st); }
   _execSeq(body,ctx);
   return ctx.out.join('').replace(/\n$/,'');
@@ -3620,6 +3692,8 @@ function _execStmt(stmt,ctx){
     else ctx.vars[name]=evalJavaValue(expr,ctx.vars);
     return;
   }
+  var cm=stmt.match(/^(\w+)\s*\(\s*\)$/);
+  if(cm&&ctx.methods&&ctx.methods.hasOwnProperty(cm[1])){ _execSeq(ctx.methods[cm[1]],ctx); return; }
   if(/^\s*(?:\w+\s*(?:\+\+|--)|(?:\+\+|--)\s*\w+|\w+\s*[+\-]=\s*.+)\s*$/.test(stmt)){ _execUpdate(stmt,ctx); }
 }
 function _splitTop(s,delim){
