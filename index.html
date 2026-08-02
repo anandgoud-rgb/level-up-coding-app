@@ -3322,6 +3322,42 @@ const JAVA_LEVELS=[
       answer:2,
       explain:'The modulus (%) operator returns the remainder after division. For example, 20 % 10 = 0.'
     }
+  },
+  {
+    id:5, topic:'Decision Making', icon:'📊', color:'#8b5cf6',
+    badge:'Decision Master', badgeIcon:'📊', xp:100,
+    appName:'Smart Grade Calculator', appIcon:'📊',
+    learn:{
+      def:'Decision making lets a program choose different actions based on conditions.',
+      why:'Just like real life: if it rains → take an umbrella; if marks ≥ 40 → PASS. Computers use if / else to decide.',
+      real:'A teacher deciding a grade: check the marks, then pick A, B, C, D or Fail.',
+      example:'if (marks >= 40) {\n    System.out.println("PASS");\n} else {\n    System.out.println("FAIL");\n}'
+    },
+    mission:{
+      mode:'editor',
+      inputs:[{label:'Enter Marks',placeholder:'e.g. 82',default:'82'}],
+      title:'Smart Grade Calculator',
+      story:'A school wants grades decided automatically from marks. Fill in the conditions!',
+      expected:'the correct grade',
+      lockedTop:'import java.util.Scanner;\npublic class Main {\n  public static void main(String[] args) {\n    Scanner sc = new Scanner(System.in);\n    System.out.print("Enter Marks : ");\n    int marks = sc.nextInt();',
+      editable:'    if( ________ ){\n      System.out.println("Grade A");\n    }\n    else if( ________ ){\n      System.out.println("Grade B");\n    }\n    else if( ________ ){\n      System.out.println("Grade C");\n    }\n    else if( ________ ){\n      System.out.println("Grade D");\n    }\n    else{\n      System.out.println("FAIL");\n    }',
+      lockedBottom:'  }\n}',
+      hint:'Fill each condition with a marks check:  marks >= 90 ,  marks >= 75 ,  marks >= 60 ,  marks >= 40  (highest first!).',
+      tests:[
+        {name:'Grade A works (marks 95)',fn:c=>/Grade A/.test(c.runWith(95))},
+        {name:'Grade B works (marks 82)',fn:c=>/Grade B/.test(c.runWith(82))},
+        {name:'Grade C works (marks 68)',fn:c=>/Grade C/.test(c.runWith(68))},
+        {name:'Grade D works (marks 50)',fn:c=>/Grade D/.test(c.runWith(50))},
+        {name:'Fail works (marks 30)',fn:c=>/FAIL/i.test(c.runWith(30))},
+        {name:'Program runs successfully',fn:c=>c.output.indexOf('____')<0&&/Grade|FAIL/i.test(c.output)}
+      ]
+    },
+    mcq:{
+      q:'Which Java statement is used to make decisions?',
+      options:['for','Scanner','if','println'],
+      answer:2,
+      explain:'The if statement runs different code depending on whether a condition is true or false.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3329,19 +3365,87 @@ function javaAllDone(){ return JAVA_LEVELS.every(function(l){return javaDone(l.i
 
 /* ---- Phase B simulator (swap for real execution API in Phase A) ---- */
 function runJavaB(code, userInput){
-  var inputs=(userInput==null?'':String(userInput)).split('\n'); var ip=0;
-  var vars={}, out=[];
-  var re=/System\s*\.\s*out\s*\.\s*(println|print)\s*\(([\s\S]*?)\)\s*;|\b(?:String|int|long|double|float|boolean|char)?\s*(\w+)\s*=\s*([^;]+);/g;
-  var m;
-  while((m=re.exec(code))){
-    if(m[1]){ out.push(evalJavaValue(m[2],vars)+(m[1]==='println'?'\n':'')); }
-    else if(m[3]!==undefined){
-      var name=m[3], expr=(m[4]||'').trim();
-      if(/\.\s*next\w*\s*\(\s*\)/.test(expr)){ var v=(ip<inputs.length?inputs[ip++]:''); vars[name]=v; out.push(v+'\n'); }
-      else { vars[name]=evalJavaValue(expr,vars); }
-    }
+  var ctx={vars:{}, out:[], inputs:(userInput==null?'':String(userInput)).split('\n'), ip:0};
+  var body=code; var mm=code.match(/main\s*\([^)]*\)\s*\{/);
+  if(mm){ var st=code.indexOf('{',mm.index); body=_extractBlock(code,st); }
+  _execSeq(body,ctx);
+  return ctx.out.join('').replace(/\n$/,'');
+}
+function _extractBlock(s,o){ var d=0; for(var i=o;i<s.length;i++){ if(s[i]==='{')d++; else if(s[i]==='}'){d--; if(d===0)return s.slice(o+1,i);} } return s.slice(o+1); }
+function _skipBlock(s,o){ var d=0; for(var i=o;i<s.length;i++){ if(s[i]==='{')d++; else if(s[i]==='}'){d--; if(d===0)return i+1;} } return s.length; }
+function _extractParen(s,o){ var d=0; for(var i=o;i<s.length;i++){ if(s[i]==='(')d++; else if(s[i]===')'){d--; if(d===0)return s.slice(o+1,i);} } return s.slice(o+1); }
+function _skipParen(s,o){ var d=0; for(var i=o;i<s.length;i++){ if(s[i]==='(')d++; else if(s[i]===')'){d--; if(d===0)return i+1;} } return s.length; }
+function _execSeq(src,ctx){
+  var i=0,n=src.length;
+  while(i<n){
+    while(i<n&&/\s/.test(src[i]))i++;
+    if(i>=n)break;
+    if(/^if\b/.test(src.slice(i))){ i=_execIf(src,i,ctx); continue; }
+    var semi=src.indexOf(';',i), brace=src.indexOf('{',i);
+    if(semi===-1&&brace===-1)break;
+    if(brace!==-1&&(semi===-1||brace<semi)){ var inner=_extractBlock(src,brace); _execSeq(inner,ctx); i=_skipBlock(src,brace); continue; }
+    _execStmt(src.slice(i,semi).trim(),ctx); i=semi+1;
   }
-  return out.join('').replace(/\n$/,'');
+}
+function _execIf(src,i,ctx){
+  var branches=[],elseBlock=null,pos=i;
+  while(true){
+    if(!/^\s*(?:else\s+if|if)\s*\(/.test(src.slice(pos)))break;
+    var pOpen=src.indexOf('(',pos), cond=_extractParen(src,pOpen), pClose=_skipParen(src,pOpen);
+    var bOpen=src.indexOf('{',pClose), block=_extractBlock(src,bOpen); pos=_skipBlock(src,bOpen);
+    branches.push({cond:cond,block:block});
+    if(/^\s*else\s+if\b/.test(src.slice(pos)))continue;
+    if(/^\s*else\b/.test(src.slice(pos))){ var eb=src.indexOf('{',pos); elseBlock=_extractBlock(src,eb); pos=_skipBlock(src,eb); }
+    break;
+  }
+  var done=false;
+  for(var k=0;k<branches.length;k++){ if(evalCond(branches[k].cond,ctx.vars)){ _execSeq(branches[k].block,ctx); done=true; break; } }
+  if(!done&&elseBlock!=null)_execSeq(elseBlock,ctx);
+  return pos;
+}
+function _execStmt(stmt,ctx){
+  if(!stmt)return;
+  var pm=stmt.match(/^System\s*\.\s*out\s*\.\s*(println|print)\s*\(([\s\S]*)\)$/);
+  if(pm){ ctx.out.push(evalJavaValue(pm[2],ctx.vars)+(pm[1]==='println'?'\n':'')); return; }
+  var am=stmt.match(/^(?:String|int|long|double|float|boolean|char)?\s*(\w+)\s*=\s*([\s\S]+)$/);
+  if(am){ var name=am[1], expr=am[2].trim();
+    if(/\.\s*next\w*\s*\(\s*\)/.test(expr)){ var v=(ctx.ip<ctx.inputs.length?ctx.inputs[ctx.ip++]:''); ctx.vars[name]=v; ctx.out.push(v+'\n'); }
+    else ctx.vars[name]=evalJavaValue(expr,ctx.vars);
+  }
+}
+function _splitTop(s,delim){
+  var parts=[],cur='',q=null,depth=0;
+  for(var i=0;i<s.length;i++){var c=s[i];
+    if(q){cur+=c;if(c===q)q=null;continue;}
+    if(c==='"'||c==="'"){q=c;cur+=c;continue;}
+    if(c==='(')depth++; if(c===')')depth--;
+    if(depth===0&&s.substr(i,delim.length)===delim){ parts.push(cur); cur=''; i+=delim.length-1; continue; }
+    cur+=c;
+  }
+  parts.push(cur); return parts;
+}
+function _numOrVal(x,vars){ x=_stripParens((x||'').trim());
+  var sub=_subVars(x,vars);
+  if(/^-?\d+$/.test(sub))return parseInt(sub,10);
+  if(/[-+*/%]/.test(sub)&&/^[\d\s()+\-*/%]+$/.test(sub)){ try{var r=evalIntExpr(sub); if(r!==null)return r;}catch(e){} }
+  if(x.charAt(0)==='"'&&x.charAt(x.length-1)==='"')return x.slice(1,-1);
+  if(vars.hasOwnProperty(x))return vars[x];
+  return sub;
+}
+function evalCond(cond,vars){
+  cond=(cond||'').trim(); if(cond==='')return false;
+  var ors=_splitTop(cond,'||'); if(ors.length>1)return ors.some(function(p){return evalCond(p,vars);});
+  var ands=_splitTop(cond,'&&'); if(ands.length>1)return ands.every(function(p){return evalCond(p,vars);});
+  cond=_stripParens(cond);
+  var m=cond.match(/^([\s\S]+?)(>=|<=|==|!=|>|<)([\s\S]+)$/);
+  if(m){ var a=_numOrVal(m[1],vars), op=m[2], b=_numOrVal(m[3],vars);
+    if(typeof a==='number'&&typeof b==='number'){ if(op==='>=')return a>=b; if(op==='<=')return a<=b; if(op==='>')return a>b; if(op==='<')return a<b; if(op==='==')return a===b; if(op==='!=')return a!==b; }
+    var as=String(a),bs=String(b); if(op==='==')return as===bs; if(op==='!=')return as!==bs; return false;
+  }
+  var v=_subVars(cond,vars);
+  if(/^true$/i.test(v))return true; if(/^false$/i.test(v))return false;
+  if(vars.hasOwnProperty(cond))return !!vars[cond];
+  return false;
 }
 function _splitTopPlus(s){
   var parts=[],cur='',q=null,depth=0;
@@ -3562,7 +3666,7 @@ function javaMission(l){
     const tm={}; decls.forEach(function(d){tm[d.name]=d.type;});
     const typesOk=req.every(function(r){return !tm[r.name]||tm[r.name]===r.type;});
     const nums=(state.jv.userInputs||[]).map(function(x){return parseInt(x,10);});
-    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o,code:textarea.value,input:(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||'')),inputs:(state.jv.userInputs||[]),nums:nums,a:nums[0],b:nums[1]};
+    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o,code:textarea.value,input:(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||'')),inputs:(state.jv.userInputs||[]),nums:nums,a:nums[0],b:nums[1],runWith:function(inp){return runJavaB(assemble(),String(inp));}};
   }
 
   if(editor){ textarea.addEventListener('input',function(){state.jv.code=textarea.value;});
