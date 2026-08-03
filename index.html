@@ -3638,6 +3638,41 @@ const JAVA_LEVELS=[
       answer:1,
       explain:'The length() method returns the total number of characters in a String.'
     }
+  },
+  {
+    id:14, topic:'Classes', icon:'👨‍🎓', color:'#0d9488',
+    badge:'Class Creator', badgeIcon:'👨‍🎓', xp:100,
+    appName:'Student Management System', appIcon:'👨‍🎓',
+    learn:{
+      def:'A class organizes related information and behaviour into one structure.',
+      why:'Every student has a name, roll number, program, college — a Student class keeps them together instead of loose variables.',
+      real:'Like a student ID card: same fields for everyone, different values per student.',
+      example:'class Student{\n  String name;\n  String program;\n}'
+    },
+    mission:{
+      mode:'editor',
+      title:'Student Management System',
+      story:'Your college needs to organize student info. Create a Student class, make an object, and show the profile.',
+      expected:'a full student profile',
+      lockedTop:'class Student{',
+      editable:'  ________ name;\n  ________ rollNumber;\n  ________ program;\n  ________ college;\n}\npublic class Main{\n  public static void main(String[] args){\n    Student s = new Student();\n    s.name = "________";\n    s.rollNumber = "________";\n    s.program = "________";\n    s.college = "________";\n    System.out.println("===== STUDENT PROFILE =====");\n    System.out.println("Name : " + s.________);\n    System.out.println("Roll Number : " + s.________);\n    System.out.println("Program : " + s.________);\n    System.out.println("College : " + s.________);\n  }',
+      lockedBottom:'}',
+      hint:'Fields use the type  String . Put your details in quotes, e.g.  "Rahul Sharma" . Access fields with  s.name ,  s.rollNumber ,  s.program ,  s.college .',
+      tests:[
+        {name:'Student class created',fn:c=>/class\s+Student\s*\{/.test(c.full)},
+        {name:'All 4 fields declared as String',fn:c=>/String\s+name\s*;/.test(c.code)&&/String\s+rollNumber\s*;/.test(c.code)&&/String\s+program\s*;/.test(c.code)&&/String\s+college\s*;/.test(c.code)},
+        {name:'Student object created',fn:c=>/new\s+Student\s*\(\s*\)/.test(c.full)},
+        {name:'Values assigned to every field',fn:c=>c.code.indexOf('____')<0},
+        {name:'Fields displayed correctly',fn:c=>{var g=function(f){var m=c.full.match(new RegExp('s\\.'+f+'\\s*=\\s*"([^"]*)"'));return m?m[1]:null;};var nm=g('name'),rn=g('rollNumber'),pr=g('program'),co=g('college');return !!(nm&&rn&&pr&&co)&&c.output.indexOf('Name : '+nm)>=0&&c.output.indexOf('Roll Number : '+rn)>=0&&c.output.indexOf('Program : '+pr)>=0&&c.output.indexOf('College : '+co)>=0;}},
+        {name:'Program runs successfully',fn:c=>/STUDENT PROFILE/.test(c.output)&&c.code.indexOf('____')<0}
+      ]
+    },
+    mcq:{
+      q:'Why do programmers create classes?',
+      options:['To organize related information together','To print faster','To replace Scanner','To create loops'],
+      answer:0,
+      explain:'Classes help organize related data into one reusable structure.'
+    }
   }
 ];
 function javaDone(id){ return !!(state.progress&&state.progress[id]&&state.progress[id].done); }
@@ -3759,6 +3794,10 @@ function _execStmt(stmt,ctx){
   if(pm){ ctx.out.push(evalJavaValue(pm[2],ctx.vars)+(pm[1]==='println'?'\n':'')); return; }
   var arrM=stmt.match(/^\w+\s*\[\s*\]\s*(\w+)\s*=\s*\{([\s\S]*)\}$/);
   if(arrM){ ctx.vars[arrM[1]]=_splitTop(arrM[2],',').map(function(x){return evalJavaValue(x,ctx.vars);}); return; }
+  var newM=stmt.match(/^\w+\s+(\w+)\s*=\s*new\s+\w+\s*\(\s*\)$/);
+  if(newM){ ctx.vars[newM[1]]={}; return; }
+  var fam=stmt.match(/^(\w+)\s*\.\s*(\w+)\s*=\s*([\s\S]+)$/);
+  if(fam){ var ob=ctx.vars[fam[1]]; if(ob&&typeof ob==='object'&&!Array.isArray(ob)){ ob[fam[2]]=evalJavaValue(fam[3],ctx.vars); } return; }
   var am=stmt.match(/^(?:String|int|long|double|float|boolean|char)?\s*(\w+)\s*=\s*([\s\S]+)$/);
   if(am){ var name=am[1], expr=am[2].trim();
     if(/\.\s*next\w*\s*\(\s*\)/.test(expr)){ var v=(ctx.ip<ctx.inputs.length?ctx.inputs[ctx.ip++]:''); ctx.vars[name]=v; ctx.out.push(v+'\n'); }
@@ -3846,6 +3885,8 @@ function evalJavaValue(arg,vars){
   if(lm&&Array.isArray(vars[lm[1]])) return String(vars[lm[1]].length);
   var xm=arg.match(/^(\w+)\s*\[([\s\S]+)\]$/);
   if(xm&&Array.isArray(vars[xm[1]])){ var _i=parseInt(evalJavaValue(xm[2],vars),10)||0; var _e=vars[xm[1]][_i]; return _e===undefined?'':String(_e); }
+  var fm=arg.match(/^(\w+)\s*\.\s*(\w+)$/);
+  if(fm&&vars[fm[1]]&&typeof vars[fm[1]]==='object'&&!Array.isArray(vars[fm[1]])){ var _f=vars[fm[1]][fm[2]]; return _f===undefined?'':String(_f); }
   var sm=arg.match(/^(\w+)\s*\.\s*(toUpperCase|toLowerCase|length|trim)\s*\(\s*\)$/);
   if(sm){ var sb=vars.hasOwnProperty(sm[1])?String(vars[sm[1]]):sm[1];
     if(sm[2]==='toUpperCase')return sb.toUpperCase();
@@ -4038,7 +4079,7 @@ function javaMission(l){
     const tm={}; decls.forEach(function(d){tm[d.name]=d.type;});
     const typesOk=req.every(function(r){return !tm[r.name]||tm[r.name]===r.type;});
     const nums=(state.jv.userInputs||[]).map(function(x){return parseInt(x,10);});
-    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o,code:textarea.value,input:(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||'')),inputs:(state.jv.userInputs||[]),nums:nums,a:nums[0],b:nums[1],runWith:function(inp){return runJavaB(assemble(),String(inp));}};
+    return {decls:decls,namesOk:namesOk,typesOk:typesOk,output:o,code:textarea.value,full:assemble(),input:(state.jv.userInput!=null?state.jv.userInput:(M.defaultInput||'')),inputs:(state.jv.userInputs||[]),nums:nums,a:nums[0],b:nums[1],runWith:function(inp){return runJavaB(assemble(),String(inp));}};
   }
 
   if(editor){ textarea.addEventListener('input',function(){state.jv.code=textarea.value;});
